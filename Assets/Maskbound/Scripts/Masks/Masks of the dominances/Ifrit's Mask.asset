@@ -1,0 +1,54 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6cd2c0f47b3a80b4e92c1257e76df9d4, type: 3}
+  m_Name: Ifrit's Mask
+  m_EditorClassIdentifier: Assembly-CSharp::Maskbound.Core.MaskData
+  maskName: Ifrit's Mask
+  maskType: 2
+  maskIcon: {fileID: 0}
+  description: 'Aspect of destruction and unrestrained power.
+
+
+    This mask channels
+    the fury of Ifrit, the embodiment of flame and wrath.
+
+    When worn, power surges
+    violently through the bearer, turning every action into an eruption.
+
+    Strength
+    grows through aggression, but control is constantly threatened.
+
+
+    Ifrit does
+    not grant power he unleashes it.'
+  abilityType: 3
+  abilityCooldown: 4
+  speedMultiplier: 1.15
+  jumpHeightMultiplier: 1.1
+  airControlMultiplier: 1.1
+  dashDistance: 0
+  dashDuration: 0
+  grappleRange: 0
+  grappleSpeed: 0
+  slamForce: 0
+  slamRadius: 0
+  blinkDistance: 6
+  maskColor: {r: 0.8207547, g: 0.19460052, b: 0, a: 1}
+  abilityEffectPrefab: {fileID: 0}
+  abilitySound: {fileID: 0}
+  trailEffectPrefab: {fileID: 0}
+  windUpwardBoost: 0
+  stoneMassIncrease: 0
+  stoneStunDuration: 0
+  flameSpeedBoost: 1.2
+  flameBurnDPS: 6
+  flameBurnDuration: 1.5

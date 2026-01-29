@@ -1,0 +1,54 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6cd2c0f47b3a80b4e92c1257e76df9d4, type: 3}
+  m_Name: Guruda's Mask
+  m_EditorClassIdentifier: Assembly-CSharp::Maskbound.Core.MaskData
+  maskName: Guruda's Mask
+  maskType: 0
+  maskIcon: {fileID: 0}
+  description: 'Aspect of speed and aerial dominance.
+
+
+    This mask carries the
+    essence of Garuda, ruler of wind and skies.
+
+    Movement becomes instinct, and
+    combat becomes a relentless hunt.
+
+    You strike swiftly, reposition instantly,
+    and dominate from above.
+
+
+    Garuda does not face her prey she descends upon
+    it.'
+  abilityType: 0
+  abilityCooldown: 2.6
+  speedMultiplier: 1.2
+  jumpHeightMultiplier: 1.2
+  airControlMultiplier: 1.35
+  dashDistance: 9
+  dashDuration: 0.18
+  grappleRange: 12
+  grappleSpeed: 10
+  slamForce: 20
+  slamRadius: 1.5
+  blinkDistance: 5
+  maskColor: {r: 0, g: 0.7264151, b: 0.09779291, a: 1}
+  abilityEffectPrefab: {fileID: 0}
+  abilitySound: {fileID: 0}
+  trailEffectPrefab: {fileID: 0}
+  windUpwardBoost: 0.15
+  stoneMassIncrease: 0
+  stoneStunDuration: 0
+  flameSpeedBoost: 0
+  flameBurnDPS: 0
+  flameBurnDuration: 0
