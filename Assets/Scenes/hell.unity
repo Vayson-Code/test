@@ -266,7 +266,7 @@ MonoBehaviour:
   bonusAccumulationTime: 3
   bonusDecayTime: 1
   jumpHeight: 2
-  gravity: -24
+  gravity: -20
   groundedGravity: -2
   coyoteTime: 0.12
   jumpBufferTime: 0.12

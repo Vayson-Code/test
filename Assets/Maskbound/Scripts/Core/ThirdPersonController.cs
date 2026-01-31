@@ -26,7 +26,7 @@ public class ThirdPersonController : MonoBehaviour
 
     [Header("Jump Settings")]
     [SerializeField] private float jumpHeight = 2f;
-    [SerializeField] private float gravity = -24f;
+    [SerializeField] private float gravity = -20f;
     [SerializeField] private float groundedGravity = -2f;
     [SerializeField] private float coyoteTime = 0.12f;
     [SerializeField] private float jumpBufferTime = 0.12f;
@@ -190,7 +190,23 @@ public class ThirdPersonController : MonoBehaviour
 
     private void HandleGravity()
     {
-        velocity.y = isGrounded ? groundedGravity : velocity.y + gravity * cachedDeltaTime;
+        // ALWAYS apply gravity unless we're grounded AND moving downward
+        // This ensures gravity works even immediately after jumping
+        if (isGrounded && velocity.y <= 0f)
+        {
+            velocity.y = groundedGravity;
+        }
+        else
+        {
+            // Apply gravity continuously when in air OR when jumping upward
+            velocity.y += gravity * cachedDeltaTime;
+            
+            // Clamp to terminal velocity
+            if (velocity.y < gravity)
+            {
+                velocity.y = gravity;
+            }
+        }
     }
 
     private void HandleMovement()
@@ -307,19 +323,30 @@ public class ThirdPersonController : MonoBehaviour
     {
         if (!isGrounded) return;
 
-        // Calculate jump velocity using kinematic equation
-        velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
-        animator.SetTrigger(animIDJump);
+        // Use absolute value of gravity for the calculation
+        velocity.y = Mathf.Sqrt(jumpHeight * 2f * Mathf.Abs(gravity));
+
+        // Trigger jump animation
+        if (animator != null)
+        {
+            animator.SetTrigger(animIDJump);
+        }
+
         jumpRequested = false;
     }
 
     private void OnLanded()
     {
-        animator.ResetTrigger(animIDJump);
+        if (animator != null)
+        {
+            animator.ResetTrigger(animIDJump);
+        }
     }
 
     private void UpdateAnimations()
     {
+        if (animator == null) return;
+
         float totalSpeed = currentBaseSpeed + speedBonus;
         
         animator.SetBool(animIDGrounded, isGrounded);
