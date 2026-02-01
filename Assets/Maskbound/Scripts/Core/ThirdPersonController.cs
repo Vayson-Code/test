@@ -7,10 +7,10 @@ using UnityEngine.InputSystem;
 public class ThirdPersonController : MonoBehaviour
 {
     [Header("Movement Settings")]
-    [SerializeField] private float walkSpeed = 3f;
-    [SerializeField] private float runSpeed = 6f;
-    [SerializeField] private float sprintSpeed = 8.5f;
-    [SerializeField] private float rotationSpeed = 15f;
+    [SerializeField] private float walkSpeed = 2f;
+    [SerializeField] private float runSpeed = 3f;
+    [SerializeField] private float sprintSpeed = 8f;
+    [SerializeField] private float rotationSpeed = 2f;
     
     [Header("Acceleration/Deceleration")]
     [SerializeField] private float accelerationTime = 0.3f;
@@ -18,8 +18,8 @@ public class ThirdPersonController : MonoBehaviour
     [SerializeField] private float directionChangeSharpness = 8f;
     
     [Header("Speed Bonus System")]
-    [SerializeField] private float maxWalkSpeedBonus = 2f;
-    [SerializeField] private float maxRunSpeedBonus = 3f;
+    [SerializeField] private float maxWalkSpeedBonus = 1f;
+    [SerializeField] private float maxRunSpeedBonus = 5f;
     [SerializeField] private float maxSprintSpeedBonus = 4f;
     [SerializeField] private float bonusAccumulationTime = 3f;
     [SerializeField] private float bonusDecayTime = 1f;
@@ -35,6 +35,17 @@ public class ThirdPersonController : MonoBehaviour
     [SerializeField] private Transform groundCheck;
     [SerializeField] private float groundCheckRadius = 0.2f;
     [SerializeField] private LayerMask groundLayers;
+
+    [Header("Dynamic Collider (Jump Posture Adjustment)")]
+    [SerializeField] private bool useHeadFeetForCollider = true;
+    [SerializeField] private Transform headPoint;
+    [SerializeField] private Transform leftFeetPoint;
+    [SerializeField] private Transform rightFeetPoint;
+    [SerializeField] private float minColliderHeight = 0.9f;
+    [SerializeField] private float maxColliderHeight = 2.0f;
+    [SerializeField] private float colliderAdjustSpeed = 8f;
+    [SerializeField] private float colliderCenterAdjustSpeed = 8f;
+    [SerializeField] private float shrinkPadding = 0.05f;
 
     [Header("Camera")]
     [SerializeField] private Transform cameraTransform;
@@ -69,6 +80,10 @@ public class ThirdPersonController : MonoBehaviour
     private int animIDMotionSpeed;
     private int animIDMoveX;
     private int animIDMoveY;
+
+    // Collider adjustment caching
+    private float originalColliderHeight;
+    private Vector3 originalColliderCenter;
 
     // Cached values to reduce per-frame allocations and calculations
     private float cachedDeltaTime;
@@ -117,6 +132,15 @@ public class ThirdPersonController : MonoBehaviour
         {
             cameraTransform = Camera.main.transform;
         }
+
+        // Cache original collider dimensions for dynamic adjustment
+        if (characterController != null)
+        {
+            originalColliderHeight = characterController.height;
+            originalColliderCenter = characterController.center;
+            // Ensure max doesn't go below original
+            maxColliderHeight = Mathf.Max(maxColliderHeight, originalColliderHeight);
+        }
     }
 
     private void Update()
@@ -129,6 +153,7 @@ public class ThirdPersonController : MonoBehaviour
         HandleGravity();
         HandleMovement();
         UpdateAnimations();
+        UpdateColliderForPosture();
     }
 
     // Poll sprint state after all input callbacks have fired
@@ -368,6 +393,42 @@ public class ThirdPersonController : MonoBehaviour
 
         // Trigger falling animation when appropriate
         animator.SetBool(animIDFreeFall, !isGrounded && velocity.y < FALLING_THRESHOLD);
+    }
+
+    private void UpdateColliderForPosture()
+    {
+        if (!useHeadFeetForCollider || characterController == null) return;
+
+        // Determine desired height: default to original unless we can measure head/feet while airborne
+        float desiredHeight = originalColliderHeight;
+
+        if (!isGrounded && headPoint != null && leftFeetPoint != null && rightFeetPoint != null)
+        {
+            // Calculate average position of both feet
+            Vector3 averageFeetPosition = (leftFeetPoint.position + rightFeetPoint.position) * 0.5f;
+            
+            // Measure distance between head and average feet position in world space and subtract a small padding
+            float measured = Vector3.Distance(headPoint.position, averageFeetPosition) - shrinkPadding;
+            desiredHeight = Mathf.Clamp(measured, minColliderHeight, maxColliderHeight);
+        }
+
+        // Preserve the world-space bottom point of the capsule so the character doesn't sink into ground.
+        Vector3 currentCenterWorld = transform.position + characterController.center;
+        Vector3 bottomWorld = currentCenterWorld + Vector3.down * (characterController.height * 0.5f);
+
+        // Target center world Y such that bottom stays the same with new height
+        float targetCenterWorldY = bottomWorld.y + desiredHeight * 0.5f;
+        float targetCenterLocalY = targetCenterWorldY - transform.position.y;
+
+        // Smoothly interpolate height and center.y
+        float newHeight = Mathf.Lerp(characterController.height, desiredHeight, cachedDeltaTime * colliderAdjustSpeed);
+
+        Vector3 newCenter = characterController.center;
+        newCenter.y = Mathf.Lerp(characterController.center.y, targetCenterLocalY, cachedDeltaTime * colliderCenterAdjustSpeed);
+
+        // Apply
+        characterController.height = newHeight;
+        characterController.center = newCenter;
     }
 
     #region Input Handlers
