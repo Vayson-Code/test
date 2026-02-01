@@ -546,8 +546,8 @@ AnimatorState:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: jump keep
-  m_Speed: 0.1
-  m_CycleOffset: 0
+  m_Speed: 1
+  m_CycleOffset: 1
   m_Transitions:
   - {fileID: 6882433205652098513}
   m_StateMachineBehaviours: []
@@ -559,7 +559,7 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: 7400000, guid: 718edff39fafda9419dd6063f650d529, type: 3}
+  m_Motion: {fileID: 7400000, guid: 583df2234e2d1194689d9b5b62d3154c, type: 3}
   m_Tag: 
   m_SpeedParameter: 
   m_MirrorParameter: 
