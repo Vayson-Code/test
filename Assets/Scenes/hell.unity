@@ -128,15 +128,16 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 130824352}
-  - component: {fileID: 130824358}
   - component: {fileID: 130824357}
+  - component: {fileID: 130824359}
+  - component: {fileID: 130824358}
   - component: {fileID: 130824356}
   - component: {fileID: 130824355}
   - component: {fileID: 130824354}
   - component: {fileID: 130824353}
   m_Layer: 0
   m_Name: Player
-  m_TagString: Untagged
+  m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -266,26 +267,30 @@ MonoBehaviour:
   bonusAccumulationTime: 3
   bonusDecayTime: 1
   jumpHeight: 2
-  gravity: -30
-  groundedGravity: -2
+  gravity: -20
   coyoteTime: 0.12
   jumpBufferTime: 0.12
   groundCheck: {fileID: 632750551}
-  groundCheckRadius: 0.2
+  groundCheckRadius: 0.1
   groundLayers:
     serializedVersion: 2
     m_Bits: 64
+  debugGroundCheck: 1
+  groundDrag: 6
+  airDrag: 0.5
+  slopeLimit: 45
   useHeadFeetForCollider: 1
-  headPoint: {fileID: 1661431651}
+  neckPoint: {fileID: 0}
   leftFeetPoint: {fileID: 995825487}
   rightFeetPoint: {fileID: 789411463}
-  minColliderHeight: 0.8
+  minColliderHeight: 0.9
   maxColliderHeight: 2
   colliderAdjustSpeed: 8
   colliderCenterAdjustSpeed: 8
   shrinkPadding: 0.05
   cameraTransform: {fileID: 330585546}
-  characterController: {fileID: 130824358}
+  rb: {fileID: 130824359}
+  capsuleCollider: {fileID: 130824358}
   animator: {fileID: 606355960}
   combatSystem: {fileID: 130824355}
   maskManager: {fileID: 130824353}
@@ -348,8 +353,8 @@ MonoBehaviour:
   m_DefaultActionMap: Player
   m_SplitScreenIndex: -1
   m_Camera: {fileID: 330585545}
---- !u!143 &130824358
-CharacterController:
+--- !u!136 &130824358
+CapsuleCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -363,16 +368,41 @@ CharacterController:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
+  m_IsTrigger: 0
   m_ProvidesContacts: 0
   m_Enabled: 1
-  serializedVersion: 3
-  m_Height: 1.88
-  m_Radius: 0.26
-  m_SlopeLimit: 45
-  m_StepOffset: 0.3
-  m_SkinWidth: 0.08
-  m_MinMoveDistance: 0.001
-  m_Center: {x: 0, y: 0.94, z: 0}
+  serializedVersion: 2
+  m_Radius: 0.20281276
+  m_Height: 1.6517007
+  m_Direction: 1
+  m_Center: {x: -0.0038887858, y: 0.8283988, z: -0.016608566}
+--- !u!54 &130824359
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 130824351}
+  serializedVersion: 5
+  m_Mass: 1
+  m_LinearDamping: 0
+  m_AngularDamping: 0.05
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
+  m_InertiaTensor: {x: 1, y: 1, z: 1}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ImplicitCom: 1
+  m_ImplicitTensor: 1
+  m_UseGravity: 1
+  m_IsKinematic: 0
+  m_Interpolate: 0
+  m_Constraints: 0
+  m_CollisionDetection: 0
 --- !u!1 &276125298
 GameObject:
   m_ObjectHideFlags: 0
@@ -856,7 +886,10 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 400020, guid: d917c7129a9e4c74e84188b278d96de7, type: 3}
       insertIndex: -1
       addedObject: {fileID: 789411463}
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 100026, guid: d917c7129a9e4c74e84188b278d96de7, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2056269733}
   m_SourcePrefab: {fileID: 100100000, guid: d917c7129a9e4c74e84188b278d96de7, type: 3}
 --- !u!4 &606355959 stripped
 Transform:
@@ -893,7 +926,7 @@ Transform:
   m_GameObject: {fileID: 632750550}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.0289, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -924,7 +957,7 @@ Transform:
   m_GameObject: {fileID: 789411462}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.1205, y: -0, z: 0}
+  m_LocalPosition: {x: -0.12, y: 0.2362, z: -0.0124}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1020,7 +1053,7 @@ Transform:
   m_GameObject: {fileID: 995825486}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0.12, y: -0.223, z: 0.042}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1361,7 +1394,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1661431651}
   m_Layer: 0
-  m_Name: HeadTop
+  m_Name: NeckTop
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1376,7 +1409,7 @@ Transform:
   m_GameObject: {fileID: 1661431650}
   serializedVersion: 2
   m_LocalRotation: {x: -0.000000020176762, y: -0.00000002844401, z: -0.122758195, w: 0.9924366}
-  m_LocalPosition: {x: -0.32602197, y: 0.000008438714, z: -0.000000012339581}
+  m_LocalPosition: {x: -0.1001, y: 0.0313, z: -0.0053}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1387,6 +1420,32 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 400018, guid: d917c7129a9e4c74e84188b278d96de7, type: 3}
   m_PrefabInstance: {fileID: 606355958}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &2056269731 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 100026, guid: d917c7129a9e4c74e84188b278d96de7, type: 3}
+  m_PrefabInstance: {fileID: 606355958}
+  m_PrefabAsset: {fileID: 0}
+--- !u!135 &2056269733
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2056269731}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Radius: 0.13378963
+  m_Center: {x: -0.09356215, y: -0.039850313, z: 0.0000000016739694}
 --- !u!4 &2132684390 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 400074, guid: d917c7129a9e4c74e84188b278d96de7, type: 3}

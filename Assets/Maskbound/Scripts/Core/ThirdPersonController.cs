@@ -2,7 +2,8 @@ using Maskbound.Core;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-[RequireComponent(typeof(CharacterController))]
+[RequireComponent(typeof(Rigidbody))]
+[RequireComponent(typeof(CapsuleCollider))]
 [RequireComponent(typeof(PlayerInput))]
 public class ThirdPersonController : MonoBehaviour
 {
@@ -27,7 +28,6 @@ public class ThirdPersonController : MonoBehaviour
     [Header("Jump Settings")]
     [SerializeField] private float jumpHeight = 2f;
     [SerializeField] private float gravity = -20f;
-    [SerializeField] private float groundedGravity = -2f;
     [SerializeField] private float coyoteTime = 0.12f;
     [SerializeField] private float jumpBufferTime = 0.12f;
 
@@ -35,10 +35,16 @@ public class ThirdPersonController : MonoBehaviour
     [SerializeField] private Transform groundCheck;
     [SerializeField] private float groundCheckRadius = 0.2f;
     [SerializeField] private LayerMask groundLayers;
+    [SerializeField] private bool debugGroundCheck = false;
+
+    [Header("Physics Settings")]
+    [SerializeField] private float groundDrag = 6f;
+    [SerializeField] private float airDrag = 0.5f;
+    [SerializeField] private float slopeLimit = 45f;
 
     [Header("Dynamic Collider (Jump Posture Adjustment)")]
     [SerializeField] private bool useHeadFeetForCollider = true;
-    [SerializeField] private Transform headPoint;
+    [SerializeField] private Transform neckPoint;
     [SerializeField] private Transform leftFeetPoint;
     [SerializeField] private Transform rightFeetPoint;
     [SerializeField] private float minColliderHeight = 0.9f;
@@ -50,7 +56,8 @@ public class ThirdPersonController : MonoBehaviour
     [Header("Camera")]
     [SerializeField] private Transform cameraTransform;
 
-    [SerializeField] private CharacterController characterController;
+    [SerializeField] private Rigidbody rb;
+    [SerializeField] private CapsuleCollider capsuleCollider;
     [SerializeField] private Animator animator;
     [SerializeField] private CombatSystem combatSystem;
     [SerializeField] private MaskManager maskManager;
@@ -59,7 +66,6 @@ public class ThirdPersonController : MonoBehaviour
     private Vector2 moveInput;
     private Vector3 moveDirection;
     private Vector3 smoothMoveDirection;
-    private Vector3 velocity;
     
     private float currentBaseSpeed;
     private float targetBaseSpeed;
@@ -73,6 +79,10 @@ public class ThirdPersonController : MonoBehaviour
     private float lastJumpPressTime;
     private bool jumpRequested;
 
+    // Collider adjustment caching
+    private float originalColliderHeight;
+    private Vector3 originalColliderCenter;
+
     private int animIDSpeed;
     private int animIDGrounded;
     private int animIDJump;
@@ -81,11 +91,7 @@ public class ThirdPersonController : MonoBehaviour
     private int animIDMoveX;
     private int animIDMoveY;
 
-    // Collider adjustment caching
-    private float originalColliderHeight;
-    private Vector3 originalColliderCenter;
-
-    // Cached values to reduce per-frame allocations and calculations
+    // Cached values
     private float cachedDeltaTime;
     private float cachedCameraYaw;
     private const float MIN_MOVEMENT_THRESHOLD = 0.01f;
@@ -105,6 +111,21 @@ public class ThirdPersonController : MonoBehaviour
 
     private void Awake()
     {
+        // Get Rigidbody and configure it
+        if (rb == null)
+            rb = GetComponent<Rigidbody>();
+        
+        if (rb != null)
+        {
+            rb.freezeRotation = true; // Prevent physics from rotating the character
+            rb.interpolation = RigidbodyInterpolation.Interpolate;
+            rb.collisionDetectionMode = CollisionDetectionMode.Continuous;
+            rb.useGravity = false; // We'll handle gravity manually for more control
+        }
+
+        if (capsuleCollider == null)
+            capsuleCollider = GetComponent<CapsuleCollider>();
+
         if (playerInput != null)
         {
             if (playerInput.actions == null)
@@ -114,7 +135,6 @@ public class ThirdPersonController : MonoBehaviour
             else
             {
                 playerInput.actions.Enable();
-                // Cache sprint action reference for performance
                 sprintAction = playerInput.actions.FindAction("Sprint");
             }
         }
@@ -134,10 +154,10 @@ public class ThirdPersonController : MonoBehaviour
         }
 
         // Cache original collider dimensions for dynamic adjustment
-        if (characterController != null)
+        if (capsuleCollider != null)
         {
-            originalColliderHeight = characterController.height;
-            originalColliderCenter = characterController.center;
+            originalColliderHeight = capsuleCollider.height;
+            originalColliderCenter = capsuleCollider.center;
             // Ensure max doesn't go below original
             maxColliderHeight = Mathf.Max(maxColliderHeight, originalColliderHeight);
         }
@@ -145,19 +165,26 @@ public class ThirdPersonController : MonoBehaviour
 
     private void Update()
     {
-        // Cache deltaTime once per frame
         cachedDeltaTime = Time.deltaTime;
         
         CheckGrounded();
         HandleJumpBuffer();
-        HandleGravity();
-        HandleMovement();
         UpdateAnimations();
-        UpdateColliderForPosture();
+        
+        // Update collider for jump posture if enabled
+        if (useHeadFeetForCollider)
+        {
+            UpdateColliderForPosture();
+        }
     }
 
-    // Poll sprint state after all input callbacks have fired
-    // This ensures we catch the release even if OnSprint callback fails
+    private void FixedUpdate()
+    {
+        // Physics calculations should be in FixedUpdate
+        HandleMovement();
+        HandleGravity();
+    }
+
     private void LateUpdate()
     {
         if (sprintAction != null)
@@ -166,7 +193,6 @@ public class ThirdPersonController : MonoBehaviour
         }
     }
 
-    // Pre-cache animation parameter hashes to avoid string lookups
     private void AssignAnimationIDs()
     {
         animIDSpeed = Animator.StringToHash("speed");
@@ -181,8 +207,24 @@ public class ThirdPersonController : MonoBehaviour
     private void CheckGrounded()
     {
         wasGrounded = isGrounded;
+        
+        // Use groundCheck position just like the working CharacterController version
         Vector3 checkPosition = groundCheck != null ? groundCheck.position : transform.position;
+        
+        // Use CheckSphere like the original working version instead of SphereCast
         isGrounded = Physics.CheckSphere(checkPosition, groundCheckRadius, groundLayers, QueryTriggerInteraction.Ignore);
+
+        // Debug logging if enabled
+        if (debugGroundCheck)
+        {
+            Debug.Log($"Grounded: {isGrounded}, CheckPos: {checkPosition}, Velocity.y: {rb.linearVelocity.y}, LayerMask: {groundLayers.value}");
+        }
+
+        // Update drag based on grounded state
+        if (rb != null)
+        {
+            rb.linearDamping = isGrounded ? groundDrag : airDrag;
+        }
         
         if (isGrounded)
         {
@@ -194,8 +236,6 @@ public class ThirdPersonController : MonoBehaviour
         }
     }
 
-    // Jump buffering allows jump input slightly before landing
-    // Coyote time allows jump slightly after leaving ground
     private void HandleJumpBuffer()
     {
         if (!jumpRequested) return;
@@ -215,21 +255,18 @@ public class ThirdPersonController : MonoBehaviour
 
     private void HandleGravity()
     {
-        // ALWAYS apply gravity unless we're grounded AND moving downward
-        // This ensures gravity works even immediately after jumping
-        if (isGrounded && velocity.y <= 0f)
+        if (!isGrounded)
         {
-            velocity.y = groundedGravity;
+            // Apply custom gravity
+            rb.AddForce(Vector3.up * gravity, ForceMode.Acceleration);
         }
         else
         {
-            // Apply gravity continuously when in air OR when jumping upward
-            velocity.y += gravity * cachedDeltaTime;
-            
-            // Clamp to terminal velocity
-            if (velocity.y < gravity)
+            // When grounded, apply a small downward force to keep character stuck to ground
+            // This helps on slopes and prevents bouncing
+            if (rb.linearVelocity.y < 0)
             {
-                velocity.y = gravity;
+                rb.AddForce(Vector3.down * 2f, ForceMode.VelocityChange);
             }
         }
     }
@@ -241,49 +278,44 @@ public class ThirdPersonController : MonoBehaviour
         float inputMagnitude = moveInput.magnitude;
         bool isMoving = inputMagnitude > INPUT_DEAD_ZONE;
 
-        // Determine target speed based on input state
+        // Determine target speed
         if (isMoving)
         {
             targetBaseSpeed = IsSprinting ? sprintSpeed : 
                              (inputMagnitude > RUN_THRESHOLD ? runSpeed : walkSpeed);
             
-            timeMoving += cachedDeltaTime;
+            timeMoving += Time.fixedDeltaTime;
             timeStopped = 0f;
         }
         else
         {
             targetBaseSpeed = 0f;
-            timeStopped += cachedDeltaTime;
+            timeStopped += Time.fixedDeltaTime;
             timeMoving = 0f;
         }
 
-        // Exponential smoothing creates natural acceleration curves
-        // Speed changes quickly at first, then gradually slows as it approaches target
+        // Smooth speed changes
         float smoothingTime = isMoving ? accelerationTime : decelerationTime;
         float speedDiff = targetBaseSpeed - currentBaseSpeed;
-        float smoothFactor = Mathf.Exp(-cachedDeltaTime / Mathf.Max(smoothingTime, SPEED_SNAP_THRESHOLD));
+        float smoothFactor = Mathf.Exp(-Time.fixedDeltaTime / Mathf.Max(smoothingTime, SPEED_SNAP_THRESHOLD));
         currentBaseSpeed += speedDiff * (1f - smoothFactor);
 
-        // Snap to zero to prevent floating point drift
         if (Mathf.Abs(currentBaseSpeed) < SPEED_SNAP_THRESHOLD && !isMoving)
         {
             currentBaseSpeed = 0f;
         }
 
-        // Calculate max bonus allowed for current movement type
+        // Calculate speed bonus
         float maxBonus = IsSprinting ? maxSprintSpeedBonus : 
                         (inputMagnitude > RUN_THRESHOLD ? maxRunSpeedBonus : 
                         (inputMagnitude > INPUT_DEAD_ZONE ? maxWalkSpeedBonus : 0f));
 
-        // Bonus accumulates while moving, creating a skill-based reward
         if (isMoving)
         {
-            // Normalize time to 0-1 range
             float bonusProgress = Mathf.Clamp01(timeMoving / bonusAccumulationTime);
-            // Apply smoothstep curve for ease-in-out effect
             bonusProgress = bonusProgress * bonusProgress * (3f - 2f * bonusProgress);
             float targetBonus = maxBonus * bonusProgress;
-            speedBonus = Mathf.Lerp(speedBonus, targetBonus, cachedDeltaTime * BONUS_LERP_SPEED);
+            speedBonus = Mathf.Lerp(speedBonus, targetBonus, Time.fixedDeltaTime * BONUS_LERP_SPEED);
         }
         else
         {
@@ -291,16 +323,14 @@ public class ThirdPersonController : MonoBehaviour
             speedBonus = Mathf.Lerp(speedBonus, 0f, decayProgress);
         }
 
-        // Handle movement direction with camera-relative input
+        // Calculate movement direction
         if (isMoving && cameraTransform != null)
         {
             Vector3 inputDirection = new Vector3(moveInput.x, 0f, moveInput.y).normalized;
             
-            // Convert input to world space based on camera orientation
             cachedCameraYaw = cameraTransform.eulerAngles.y;
             Vector3 targetMoveDirection = Quaternion.Euler(0f, cachedCameraYaw, 0f) * inputDirection;
             
-            // Spherical interpolation prevents abrupt direction changes
             if (smoothMoveDirection.sqrMagnitude < DIRECTION_SNAP_THRESHOLD)
             {
                 smoothMoveDirection = targetMoveDirection;
@@ -310,27 +340,26 @@ public class ThirdPersonController : MonoBehaviour
                 smoothMoveDirection = Vector3.Slerp(
                     smoothMoveDirection, 
                     targetMoveDirection, 
-                    directionChangeSharpness * cachedDeltaTime
+                    directionChangeSharpness * Time.fixedDeltaTime
                 ).normalized;
             }
 
             moveDirection = smoothMoveDirection;
 
-            // Rotate character to face movement direction (forward movement only)
+            // Rotate character
             if (moveInput.y >= 0f && moveDirection.sqrMagnitude > DIRECTION_SNAP_THRESHOLD)
             {
                 Quaternion targetRotation = Quaternion.LookRotation(moveDirection);
-                transform.rotation = Quaternion.Slerp(
-                    transform.rotation, 
+                rb.MoveRotation(Quaternion.Slerp(
+                    rb.rotation, 
                     targetRotation, 
-                    rotationSpeed * cachedDeltaTime
-                );
+                    rotationSpeed * Time.fixedDeltaTime
+                ));
             }
         }
         else if (!isMoving)
         {
-            // Gradual direction decay prevents instant stops
-            smoothMoveDirection = Vector3.Lerp(smoothMoveDirection, Vector3.zero, cachedDeltaTime * DIRECTION_DECAY_SPEED);
+            smoothMoveDirection = Vector3.Lerp(smoothMoveDirection, Vector3.zero, Time.fixedDeltaTime * DIRECTION_DECAY_SPEED);
             if (smoothMoveDirection.sqrMagnitude < DIRECTION_SNAP_THRESHOLD)
             {
                 smoothMoveDirection = Vector3.zero;
@@ -338,26 +367,48 @@ public class ThirdPersonController : MonoBehaviour
             }
         }
 
-        // Apply final movement with combined base speed and bonus
+        // Apply movement
         float totalSpeed = currentBaseSpeed + speedBonus;
-        Vector3 movement = moveDirection * totalSpeed + Vector3.up * velocity.y;
-        characterController.Move(movement * cachedDeltaTime);
+        
+        if (isGrounded)
+        {
+            // Simple ground movement
+            Vector3 targetVelocity = moveDirection * totalSpeed;
+            Vector3 currentVelocityXZ = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
+            Vector3 velocityChange = targetVelocity - currentVelocityXZ;
+            
+            rb.AddForce(velocityChange, ForceMode.VelocityChange);
+        }
+        else
+        {
+            // Air control (reduced)
+            Vector3 targetVelocity = moveDirection * totalSpeed * 0.3f;
+            Vector3 currentVelocityXZ = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
+            Vector3 velocityChange = (targetVelocity - currentVelocityXZ) * Time.fixedDeltaTime;
+            
+            rb.AddForce(velocityChange, ForceMode.VelocityChange);
+        }
     }
 
     private void Jump()
     {
         if (!isGrounded) return;
 
-        // Use absolute value of gravity for the calculation
-        velocity.y = Mathf.Sqrt(jumpHeight * 2f * Mathf.Abs(gravity));
+        // Calculate jump velocity
+        float jumpVelocity = Mathf.Sqrt(jumpHeight * 2f * Mathf.Abs(gravity));
 
-        // Trigger jump animation
+        // Reset Y velocity and apply jump
+        Vector3 vel = rb.linearVelocity;
+        vel.y = jumpVelocity;
+        rb.linearVelocity = vel;
+
         if (animator != null)
         {
             animator.SetTrigger(animIDJump);
         }
 
         jumpRequested = false;
+        isGrounded = false; // Immediately set to false to prevent double jumps
     }
 
     private void OnLanded()
@@ -378,7 +429,6 @@ public class ThirdPersonController : MonoBehaviour
         animator.SetFloat(animIDSpeed, totalSpeed);
         animator.SetFloat(animIDMotionSpeed, 1f);
 
-        // Convert world movement to local space for blend tree
         if (totalSpeed > MIN_MOVEMENT_THRESHOLD)
         {
             Vector3 localMove = transform.InverseTransformDirection(moveDirection);
@@ -391,44 +441,45 @@ public class ThirdPersonController : MonoBehaviour
             animator.SetFloat(animIDMoveY, 0f);
         }
 
-        // Trigger falling animation when appropriate
-        animator.SetBool(animIDFreeFall, !isGrounded && velocity.y < FALLING_THRESHOLD);
+        animator.SetBool(animIDFreeFall, !isGrounded && rb.linearVelocity.y < FALLING_THRESHOLD);
     }
 
     private void UpdateColliderForPosture()
     {
-        if (!useHeadFeetForCollider || characterController == null) return;
+        if (!useHeadFeetForCollider || capsuleCollider == null) return;
 
-        // Determine desired height: default to original unless we can measure head/feet while airborne
+        // Determine desired height: default to original unless we can measure neck/feet while airborne
         float desiredHeight = originalColliderHeight;
 
-        if (!isGrounded && headPoint != null && leftFeetPoint != null && rightFeetPoint != null)
+        if (!isGrounded && neckPoint != null && leftFeetPoint != null && rightFeetPoint != null)
         {
-            // Calculate average position of both feet
-            Vector3 averageFeetPosition = (leftFeetPoint.position + rightFeetPoint.position) * 0.5f;
+            // Use the LOWEST foot to get maximum height distance
+            float lowestFootY = Mathf.Min(leftFeetPoint.position.y, rightFeetPoint.position.y);
             
-            // Measure distance between head and average feet position in world space and subtract a small padding
-            float measured = Vector3.Distance(headPoint.position, averageFeetPosition) - shrinkPadding;
+            // Measure Y-axis distance between neck and lowest foot and subtract padding
+            float measured = neckPoint.position.y - lowestFootY - shrinkPadding;
             desiredHeight = Mathf.Clamp(measured, minColliderHeight, maxColliderHeight);
         }
 
         // Preserve the world-space bottom point of the capsule so the character doesn't sink into ground.
-        Vector3 currentCenterWorld = transform.position + characterController.center;
-        Vector3 bottomWorld = currentCenterWorld + Vector3.down * (characterController.height * 0.5f);
+        Vector3 worldCenter = transform.TransformPoint(capsuleCollider.center);
+        Vector3 bottomWorld = worldCenter + Vector3.down * (capsuleCollider.height * 0.5f);
 
         // Target center world Y such that bottom stays the same with new height
         float targetCenterWorldY = bottomWorld.y + desiredHeight * 0.5f;
-        float targetCenterLocalY = targetCenterWorldY - transform.position.y;
+        
+        // Convert back to local space
+        Vector3 targetCenterLocal = transform.InverseTransformPoint(new Vector3(worldCenter.x, targetCenterWorldY, worldCenter.z));
 
         // Smoothly interpolate height and center.y
-        float newHeight = Mathf.Lerp(characterController.height, desiredHeight, cachedDeltaTime * colliderAdjustSpeed);
+        float newHeight = Mathf.Lerp(capsuleCollider.height, desiredHeight, cachedDeltaTime * colliderAdjustSpeed);
 
-        Vector3 newCenter = characterController.center;
-        newCenter.y = Mathf.Lerp(characterController.center.y, targetCenterLocalY, cachedDeltaTime * colliderCenterAdjustSpeed);
+        Vector3 newCenter = capsuleCollider.center;
+        newCenter.y = Mathf.Lerp(capsuleCollider.center.y, targetCenterLocal.y, cachedDeltaTime * colliderCenterAdjustSpeed);
 
         // Apply
-        characterController.height = newHeight;
-        characterController.center = newCenter;
+        capsuleCollider.height = newHeight;
+        capsuleCollider.center = newCenter;
     }
 
     #region Input Handlers
@@ -492,11 +543,15 @@ public class ThirdPersonController : MonoBehaviour
     public void SetMovementEnabled(bool enabled)
     {
         this.enabled = enabled;
+        if (!enabled)
+        {
+            rb.linearVelocity = Vector3.zero;
+        }
     }
 
     public void AddImpulse(Vector3 force)
     {
-        velocity += force;
+        rb.AddForce(force, ForceMode.Impulse);
     }
 
     public Vector3 GetMoveDirection() => moveDirection;
