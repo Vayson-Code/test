@@ -133,7 +133,6 @@ GameObject:
   - component: {fileID: 130824358}
   - component: {fileID: 130824356}
   - component: {fileID: 130824355}
-  - component: {fileID: 130824354}
   - component: {fileID: 130824353}
   m_Layer: 0
   m_Name: Player
@@ -183,35 +182,6 @@ MonoBehaviour:
   showMaskSwitchUI: 1
   switchEffectPrefab: {fileID: 0}
   switchSound: {fileID: 0}
---- !u!114 &130824354
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 130824351}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4a4124c8ac22af749b090835d84ac986, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ParkourSystem
-  slideSpeed: 10
-  slideControllerHeight: 0.5
-  slideDuration: 1.5
-  slideCooldown: 1
-  wallRunSpeed: 8
-  wallRunDuration: 2
-  wallCheckDistance: 0.7
-  wallJumpUpForce: 10
-  wallJumpSideForce: 12
-  wallLayers:
-    serializedVersion: 2
-    m_Bits: 256
-  vaultHeight: 1.5
-  vaultForwardForce: 5
-  vaultCheckDistance: 1
-  ledgeGrabHeight: 2
-  ledgeClimbSpeed: 3
 --- !u!114 &130824355
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -266,7 +236,7 @@ MonoBehaviour:
   maxSprintSpeedBonus: 4
   bonusAccumulationTime: 3
   bonusDecayTime: 1
-  jumpHeight: 2
+  jumpHeight: 8
   gravity: -20
   coyoteTime: 0.12
   jumpBufferTime: 0.12
@@ -275,22 +245,8 @@ MonoBehaviour:
   groundLayers:
     serializedVersion: 2
     m_Bits: 64
-  debugGroundCheck: 1
-  groundDrag: 6
-  airDrag: 0.5
-  slopeLimit: 45
-  useHeadFeetForCollider: 1
-  neckPoint: {fileID: 0}
-  leftFeetPoint: {fileID: 995825487}
-  rightFeetPoint: {fileID: 789411463}
-  minColliderHeight: 0.9
-  maxColliderHeight: 2
-  colliderAdjustSpeed: 8
-  colliderCenterAdjustSpeed: 8
-  shrinkPadding: 0.05
   cameraTransform: {fileID: 330585546}
   rb: {fileID: 130824359}
-  capsuleCollider: {fileID: 130824358}
   animator: {fileID: 606355960}
   combatSystem: {fileID: 130824355}
   maskManager: {fileID: 130824353}
@@ -373,9 +329,9 @@ CapsuleCollider:
   m_Enabled: 1
   serializedVersion: 2
   m_Radius: 0.20281276
-  m_Height: 1.6517007
+  m_Height: 1.5968065
   m_Direction: 1
-  m_Center: {x: -0.0038887858, y: 0.8283988, z: -0.016608566}
+  m_Center: {x: -0.0038887858, y: 0.8009517, z: -0.016608566}
 --- !u!54 &130824359
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -400,9 +356,9 @@ Rigidbody:
   m_ImplicitTensor: 1
   m_UseGravity: 1
   m_IsKinematic: 0
-  m_Interpolate: 0
-  m_Constraints: 0
-  m_CollisionDetection: 0
+  m_Interpolate: 1
+  m_Constraints: 112
+  m_CollisionDetection: 1
 --- !u!1 &276125298
 GameObject:
   m_ObjectHideFlags: 0
@@ -604,7 +560,7 @@ Transform:
   m_GameObject: {fileID: 330585543}
   serializedVersion: 2
   m_LocalRotation: {x: 0.2534013, y: -0.000000010147328, z: 0.0000000026581035, w: 0.9673613}
-  m_LocalPosition: {x: -0.00000001575571, y: 3.6590087, z: -4.021566}
+  m_LocalPosition: {x: -0.00000001575571, y: 3.6590085, z: -4.021566}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1091,7 +1047,7 @@ Transform:
   m_GameObject: {fileID: 1202864444}
   serializedVersion: 2
   m_LocalRotation: {x: 0.2534013, y: -0.000000010147328, z: 0.0000000026581035, w: 0.9673613}
-  m_LocalPosition: {x: -0.00000001575571, y: 3.6590087, z: -4.021566}
+  m_LocalPosition: {x: -0.00000001575571, y: 3.6590085, z: -4.021566}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

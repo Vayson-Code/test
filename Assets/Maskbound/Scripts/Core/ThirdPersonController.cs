@@ -3,7 +3,6 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 
 [RequireComponent(typeof(Rigidbody))]
-[RequireComponent(typeof(CapsuleCollider))]
 [RequireComponent(typeof(PlayerInput))]
 public class ThirdPersonController : MonoBehaviour
 {
@@ -35,29 +34,11 @@ public class ThirdPersonController : MonoBehaviour
     [SerializeField] private Transform groundCheck;
     [SerializeField] private float groundCheckRadius = 0.2f;
     [SerializeField] private LayerMask groundLayers;
-    [SerializeField] private bool debugGroundCheck = false;
-
-    [Header("Physics Settings")]
-    [SerializeField] private float groundDrag = 6f;
-    [SerializeField] private float airDrag = 0.5f;
-    [SerializeField] private float slopeLimit = 45f;
-
-    [Header("Dynamic Collider (Jump Posture Adjustment)")]
-    [SerializeField] private bool useHeadFeetForCollider = true;
-    [SerializeField] private Transform neckPoint;
-    [SerializeField] private Transform leftFeetPoint;
-    [SerializeField] private Transform rightFeetPoint;
-    [SerializeField] private float minColliderHeight = 0.9f;
-    [SerializeField] private float maxColliderHeight = 2.0f;
-    [SerializeField] private float colliderAdjustSpeed = 8f;
-    [SerializeField] private float colliderCenterAdjustSpeed = 8f;
-    [SerializeField] private float shrinkPadding = 0.05f;
 
     [Header("Camera")]
     [SerializeField] private Transform cameraTransform;
 
     [SerializeField] private Rigidbody rb;
-    [SerializeField] private CapsuleCollider capsuleCollider;
     [SerializeField] private Animator animator;
     [SerializeField] private CombatSystem combatSystem;
     [SerializeField] private MaskManager maskManager;
@@ -78,10 +59,6 @@ public class ThirdPersonController : MonoBehaviour
     private float lastGroundedTime;
     private float lastJumpPressTime;
     private bool jumpRequested;
-
-    // Collider adjustment caching
-    private float originalColliderHeight;
-    private Vector3 originalColliderCenter;
 
     private int animIDSpeed;
     private int animIDGrounded;
@@ -111,21 +88,6 @@ public class ThirdPersonController : MonoBehaviour
 
     private void Awake()
     {
-        // Get Rigidbody and configure it
-        if (rb == null)
-            rb = GetComponent<Rigidbody>();
-        
-        if (rb != null)
-        {
-            rb.freezeRotation = true; // Prevent physics from rotating the character
-            rb.interpolation = RigidbodyInterpolation.Interpolate;
-            rb.collisionDetectionMode = CollisionDetectionMode.Continuous;
-            rb.useGravity = false; // We'll handle gravity manually for more control
-        }
-
-        if (capsuleCollider == null)
-            capsuleCollider = GetComponent<CapsuleCollider>();
-
         if (playerInput != null)
         {
             if (playerInput.actions == null)
@@ -144,6 +106,7 @@ public class ThirdPersonController : MonoBehaviour
         }
 
         AssignAnimationIDs();
+        
     }
 
     private void Start()
@@ -151,15 +114,6 @@ public class ThirdPersonController : MonoBehaviour
         if (cameraTransform == null && Camera.main != null)
         {
             cameraTransform = Camera.main.transform;
-        }
-
-        // Cache original collider dimensions for dynamic adjustment
-        if (capsuleCollider != null)
-        {
-            originalColliderHeight = capsuleCollider.height;
-            originalColliderCenter = capsuleCollider.center;
-            // Ensure max doesn't go below original
-            maxColliderHeight = Mathf.Max(maxColliderHeight, originalColliderHeight);
         }
     }
 
@@ -171,10 +125,10 @@ public class ThirdPersonController : MonoBehaviour
         HandleJumpBuffer();
         UpdateAnimations();
         
-        // Update collider for jump posture if enabled
-        if (useHeadFeetForCollider)
+        // Update sprint state from input action
+        if (sprintAction != null)
         {
-            UpdateColliderForPosture();
+            IsSprinting = sprintAction.IsPressed();
         }
     }
 
@@ -183,14 +137,6 @@ public class ThirdPersonController : MonoBehaviour
         // Physics calculations should be in FixedUpdate
         HandleMovement();
         HandleGravity();
-    }
-
-    private void LateUpdate()
-    {
-        if (sprintAction != null)
-        {
-            IsSprinting = sprintAction.IsPressed();
-        }
     }
 
     private void AssignAnimationIDs()
@@ -213,18 +159,6 @@ public class ThirdPersonController : MonoBehaviour
         
         // Use CheckSphere like the original working version instead of SphereCast
         isGrounded = Physics.CheckSphere(checkPosition, groundCheckRadius, groundLayers, QueryTriggerInteraction.Ignore);
-
-        // Debug logging if enabled
-        if (debugGroundCheck)
-        {
-            Debug.Log($"Grounded: {isGrounded}, CheckPos: {checkPosition}, Velocity.y: {rb.linearVelocity.y}, LayerMask: {groundLayers.value}");
-        }
-
-        // Update drag based on grounded state
-        if (rb != null)
-        {
-            rb.linearDamping = isGrounded ? groundDrag : airDrag;
-        }
         
         if (isGrounded)
         {
@@ -401,6 +335,7 @@ public class ThirdPersonController : MonoBehaviour
         Vector3 vel = rb.linearVelocity;
         vel.y = jumpVelocity;
         rb.linearVelocity = vel;
+        
 
         if (animator != null)
         {
@@ -442,44 +377,6 @@ public class ThirdPersonController : MonoBehaviour
         }
 
         animator.SetBool(animIDFreeFall, !isGrounded && rb.linearVelocity.y < FALLING_THRESHOLD);
-    }
-
-    private void UpdateColliderForPosture()
-    {
-        if (!useHeadFeetForCollider || capsuleCollider == null) return;
-
-        // Determine desired height: default to original unless we can measure neck/feet while airborne
-        float desiredHeight = originalColliderHeight;
-
-        if (!isGrounded && neckPoint != null && leftFeetPoint != null && rightFeetPoint != null)
-        {
-            // Use the LOWEST foot to get maximum height distance
-            float lowestFootY = Mathf.Min(leftFeetPoint.position.y, rightFeetPoint.position.y);
-            
-            // Measure Y-axis distance between neck and lowest foot and subtract padding
-            float measured = neckPoint.position.y - lowestFootY - shrinkPadding;
-            desiredHeight = Mathf.Clamp(measured, minColliderHeight, maxColliderHeight);
-        }
-
-        // Preserve the world-space bottom point of the capsule so the character doesn't sink into ground.
-        Vector3 worldCenter = transform.TransformPoint(capsuleCollider.center);
-        Vector3 bottomWorld = worldCenter + Vector3.down * (capsuleCollider.height * 0.5f);
-
-        // Target center world Y such that bottom stays the same with new height
-        float targetCenterWorldY = bottomWorld.y + desiredHeight * 0.5f;
-        
-        // Convert back to local space
-        Vector3 targetCenterLocal = transform.InverseTransformPoint(new Vector3(worldCenter.x, targetCenterWorldY, worldCenter.z));
-
-        // Smoothly interpolate height and center.y
-        float newHeight = Mathf.Lerp(capsuleCollider.height, desiredHeight, cachedDeltaTime * colliderAdjustSpeed);
-
-        Vector3 newCenter = capsuleCollider.center;
-        newCenter.y = Mathf.Lerp(capsuleCollider.center.y, targetCenterLocal.y, cachedDeltaTime * colliderCenterAdjustSpeed);
-
-        // Apply
-        capsuleCollider.height = newHeight;
-        capsuleCollider.center = newCenter;
     }
 
     #region Input Handlers
