@@ -11,7 +11,6 @@ public class AnimatedCapsule : MonoBehaviour
 
     void Awake()
     {
-
         initialHeight = capsule.height;
         initialCenter = capsule.center;
     }
@@ -30,9 +29,10 @@ public class AnimatedCapsule : MonoBehaviour
         float h = animator.GetFloat("capsuleHeight");
         float c = animator.GetFloat("capsuleCenterY");
         
-        // Debug to see what you're actually getting
-        Debug.Log($"Curve value: {h}, Radius: {capsule.radius}");
-
+        // FIX: If values are 0 or invalid, use defaults (1.0)
+        if (h <= 0.01f) h = 1.0f;
+        if (c <= 0.01f) c = 1.0f;
+        
         // Clamp to minimum valid capsule height (must be at least 2x radius)
         float minHeight = capsule.radius * 2f;
         capsule.height = Mathf.Max(initialHeight * h, minHeight);
