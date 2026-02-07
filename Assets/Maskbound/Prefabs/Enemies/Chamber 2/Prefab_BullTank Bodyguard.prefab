@@ -135,6 +135,10 @@ PrefabInstance:
       value: Prefab_BullTank Bodyguard
       objectReference: {fileID: 0}
     - target: {fileID: 9023676823113278748, guid: b011f8d602793ae46a3b7a8fdce28b78, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
+    - target: {fileID: 9023676823113278748, guid: b011f8d602793ae46a3b7a8fdce28b78, type: 3}
       propertyPath: m_IsActive
       value: 1
       objectReference: {fileID: 0}
@@ -151,6 +155,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 9023676823113278748, guid: b011f8d602793ae46a3b7a8fdce28b78, type: 3}
       insertIndex: -1
       addedObject: {fileID: 2511534686790358069}
+    - targetCorrespondingSourceObject: {fileID: 9023676823113278748, guid: b011f8d602793ae46a3b7a8fdce28b78, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4333121952460375320}
   m_SourcePrefab: {fileID: 100100000, guid: b011f8d602793ae46a3b7a8fdce28b78, type: 3}
 --- !u!1 &448488051359815454 stripped
 GameObject:
@@ -204,6 +211,29 @@ NavMeshAgent:
   m_BaseOffset: 0
   m_WalkableMask: 4294967295
   m_ObstacleAvoidanceType: 4
+--- !u!136 &4333121952460375320
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 448488051359815454}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 0.5
+  m_Height: 1.35
+  m_Direction: 1
+  m_Center: {x: 0, y: 1.23, z: 0}
 --- !u!4 &1324282644129729299 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 7593948371053312273, guid: b011f8d602793ae46a3b7a8fdce28b78, type: 3}

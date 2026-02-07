@@ -134,6 +134,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Prefab_BullTank Viking
       objectReference: {fileID: 0}
+    - target: {fileID: 9023676823113278748, guid: b011f8d602793ae46a3b7a8fdce28b78, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects:
@@ -147,6 +151,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 9023676823113278748, guid: b011f8d602793ae46a3b7a8fdce28b78, type: 3}
       insertIndex: -1
       addedObject: {fileID: 101495229554621636}
+    - targetCorrespondingSourceObject: {fileID: 9023676823113278748, guid: b011f8d602793ae46a3b7a8fdce28b78, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2990806110360428486}
   m_SourcePrefab: {fileID: 100100000, guid: b011f8d602793ae46a3b7a8fdce28b78, type: 3}
 --- !u!4 &2763413077041036633 stripped
 Transform:
@@ -205,3 +212,26 @@ NavMeshAgent:
   m_BaseOffset: 0
   m_WalkableMask: 4294967295
   m_ObstacleAvoidanceType: 4
+--- !u!136 &2990806110360428486
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3602888500848714068}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 0.5
+  m_Height: 1.35
+  m_Direction: 1
+  m_Center: {x: 0, y: 1.23, z: 0}

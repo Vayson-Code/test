@@ -3151,7 +3151,7 @@ GameObject:
   - component: {fileID: 4824324821238032820}
   - component: {fileID: 8743115191225326133}
   - component: {fileID: 6515140862341173096}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Big_Boy_Skin1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
