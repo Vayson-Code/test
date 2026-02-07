@@ -136,9 +136,10 @@ public class ThirdPersonController : MonoBehaviour
     private void FixedUpdate()
     {
         // Physics calculations should be in FixedUpdate
-        Debug.Log(IsAgainstWall());
         if(!IsAgainstWall())
-        {HandleMovement();}
+        {
+            HandleMovement();
+        }
         HandleGravity();
     }
 
@@ -235,7 +236,25 @@ public class ThirdPersonController : MonoBehaviour
 
     private void HandleMovement()
     {
-        if (combatSystem != null && combatSystem.IsInAction) return;
+        // Block movement during attacks and prevent sliding
+        if (combatSystem != null && combatSystem.IsInAction)
+        {
+            // Zero out horizontal velocity to prevent sliding during attacks
+            Vector3 vel = rb.linearVelocity;
+            vel.x = 0f;
+            vel.z = 0f;
+            rb.linearVelocity = vel;
+            
+            // Reset movement variables
+            currentBaseSpeed = 0f;
+            targetBaseSpeed = 0f;
+            speedBonus = 0f;
+            timeMoving = 0f;
+            smoothMoveDirection = Vector3.zero;
+            moveDirection = Vector3.zero;
+            
+            return;
+        }
 
         float inputMagnitude = moveInput.magnitude;
         bool isMoving = inputMagnitude > INPUT_DEAD_ZONE;
@@ -432,11 +451,18 @@ public class ThirdPersonController : MonoBehaviour
     {
         if (value.isPressed && combatSystem != null)
         {
-            FindFirstObjectByType<Enemy>().TakeDamage(10); 
             combatSystem.PerformAttack();
         }
     }
 
+    public void OnHeavyAttack(InputValue value)
+    {
+        if (value.isPressed && combatSystem != null)
+        {
+            combatSystem.PerformHeavyAttack();
+        }
+    }
+    
     public void OnAbility(InputValue value)
     {
         if (value.isPressed && playerSkillsManager != null && playerSkillsManager.HasCurrentMaskAbility(0))
