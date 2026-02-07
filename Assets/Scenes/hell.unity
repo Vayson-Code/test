@@ -218,10 +218,11 @@ MonoBehaviour:
   maxSprintSpeedBonus: 4
   bonusAccumulationTime: 3
   bonusDecayTime: 1
-  jumpHeight: 8
+  jumpHeight: 5
   gravity: -20
   coyoteTime: 0.12
   jumpBufferTime: 0.12
+  airControlMultiplier: 0.5
   groundCheck: {fileID: 632750551}
   groundCheckRadius: 0.1
   groundLayers:

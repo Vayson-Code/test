@@ -26,14 +26,14 @@ public class ThirdPersonController : MonoBehaviour
     [SerializeField] private float bonusDecayTime = 1f;
 
     [Header("Jump Settings")]
-    [SerializeField] private float jumpHeight = 2f;
+    [SerializeField] private float jumpHeight = 5f;
     [SerializeField] private float gravity = -20f;
     [SerializeField] private float coyoteTime = 0.12f;
     [SerializeField] private float jumpBufferTime = 0.12f;
-
+    [SerializeField] private float airControlMultiplier = 0.5f;// 50% of ground speed while in air
     [Header("Ground Check")]
     [SerializeField] private Transform groundCheck;
-    [SerializeField] private float groundCheckRadius = 0.2f;
+    [SerializeField] private float groundCheckRadius = 0.1f;
     [SerializeField] private LayerMask groundLayers;
 
     [Header("Camera")]
@@ -315,10 +315,10 @@ public class ThirdPersonController : MonoBehaviour
         }
         else
         {
-            // Air control (reduced)
-            Vector3 targetVelocity = moveDirection * totalSpeed * 0.3f;
+            // Air control (reduced speed but same application method)
+            Vector3 targetVelocity = moveDirection * totalSpeed * airControlMultiplier;
             Vector3 currentVelocityXZ = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
-            Vector3 velocityChange = (targetVelocity - currentVelocityXZ) * Time.fixedDeltaTime;
+            Vector3 velocityChange = targetVelocity - currentVelocityXZ;
             
             rb.AddForce(velocityChange, ForceMode.VelocityChange);
         }
