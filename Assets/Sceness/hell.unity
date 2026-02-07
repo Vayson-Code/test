@@ -191,9 +191,10 @@ MonoBehaviour:
   - 15
   - 20
   heavyAttackDamage: 35
-  lightAttackDuration: 0.7
+  lightAttackDuration: 0.6
   heavyAttackDuration: 1.2
-  comboWindowStart: 0.3
+  comboWindowStart: 0.4
+  attackRecoveryTime: 0.2
   hitStopDuration: 0.06
   heavyHitStopDuration: 0.12
   animator: {fileID: 917798690}
@@ -392,6 +393,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 130824352}
     m_Modifications:
+    - target: {fileID: 3888716729385167418, guid: efffa0ca2a21b5f4b99a8a775304a150, type: 3}
+      propertyPath: m_ApplyRootMotion
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 4550497054005763774, guid: efffa0ca2a21b5f4b99a8a775304a150, type: 3}
       propertyPath: m_IsActive
       value: 1

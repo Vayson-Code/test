@@ -23,9 +23,17 @@ namespace Maskbound.Core
         [SerializeField] private float heavyAttackDamage = 35f;
 
         [Header("Attack Properties")]
+        [Tooltip("How long a light attack animation takes to complete")]
         [SerializeField] private float lightAttackDuration = 0.6f;
+        
+        [Tooltip("How long a heavy attack animation takes to complete")]
         [SerializeField] private float heavyAttackDuration = 1.2f;
-        [SerializeField] private float comboWindowStart = 0.3f; // When next input can be buffered
+        
+        [Tooltip("When during an attack the player can buffer the next input (0.3 = 30% through animation)")]
+        [SerializeField] private float comboWindowStart = 0.3f;
+        
+        [Tooltip("Time after attack ends before movement is allowed (prevents sliding)")]
+        [SerializeField] private float attackRecoveryTime = 0.2f;
         
         [Header("Hit Effects")]
         [SerializeField] private float hitStopDuration = 0.06f;
@@ -188,21 +196,29 @@ namespace Maskbound.Core
 
             EnterCombat();
 
+            float totalDuration;
+            
             // Trigger appropriate animation
             if (isHeavy)
             {
                 animator.SetTrigger(animIDHeavyAttack);
-                currentAttackEndTime = Time.time + heavyAttackDuration;
+                totalDuration = heavyAttackDuration;
+                currentAttackEndTime = Time.time + totalDuration;
                 
-                // Reset combo after heavy attack
-                yield return new WaitForSeconds(heavyAttackDuration);
+                // Wait for animation to complete
+                yield return new WaitForSeconds(totalDuration);
+                
+                // Add recovery time before allowing movement
+                yield return new WaitForSeconds(attackRecoveryTime);
+                
                 ResetCombo();
             }
             else
             {
                 // Trigger specific light attack based on combo index
                 TriggerLightComboAnimation(currentComboIndex);
-                currentAttackEndTime = Time.time + lightAttackDuration;
+                totalDuration = lightAttackDuration;
+                currentAttackEndTime = Time.time + totalDuration;
                 
                 // Increment combo
                 currentComboIndex++;
@@ -212,7 +228,11 @@ namespace Maskbound.Core
                 }
                 OnComboIncreased?.Invoke(currentComboIndex);
                 
-                yield return new WaitForSeconds(lightAttackDuration);
+                // Wait for animation to complete
+                yield return new WaitForSeconds(totalDuration);
+                
+                // Add recovery time before allowing movement
+                yield return new WaitForSeconds(attackRecoveryTime);
             }
 
             canAttack = true;
@@ -345,5 +365,4 @@ namespace Maskbound.Core
         void TakeDamage(float damage);
         void Die();
     }
-    
 }
