@@ -1,5 +1,7 @@
+using Maskbound.Scripts.Enemis;
 using UnityEngine;
 using UnityEngine.AI;
+using UnityEngine.Events;
 
 namespace Maskbound.Core
 {
@@ -14,7 +16,6 @@ namespace Maskbound.Core
         [SerializeField] private bool showHealthBar = true;
 
         [Header("Damage")]
-        [SerializeField] private float contactDamage = 10f;
         [SerializeField] private float attackDamage = 20f;
         [SerializeField] private float attackRange = 2f;
         [SerializeField] private float attackCooldown = 2f;
@@ -39,6 +40,8 @@ namespace Maskbound.Core
         private bool isDead;
         private bool isStunned;
         private float stunEndTime;
+        private float currentSpeed; // Dynamic speed for smooth acceleration
+        private const float SpeedSmoothTime = 0.25f; // Smoothing factor for acceleration
 
         // Animation hashes
         private int animIDSpeed;
@@ -46,14 +49,15 @@ namespace Maskbound.Core
         private int animIDHit;
         private int animIDDeath;
 
+        public UnityEvent<float> OnHealthChanged = new UnityEvent<float>();
+
         private void Awake()
         {
             agent = GetComponent<NavMeshAgent>();
             animator = GetComponent<Animator>();
-            
             currentHealth = maxHealth;
-            
             AssignAnimationIDs();
+            currentSpeed = 0f;
         }
 
         private void Start()
@@ -64,6 +68,7 @@ namespace Maskbound.Core
             {
                 player = playerObj.transform;
             }
+            EnemyManager.Instance.RegisterEnemy(gameObject);
         }
 
         private void Update()
@@ -101,15 +106,16 @@ namespace Maskbound.Core
 
             float distanceToPlayer = Vector3.Distance(transform.position, player.position);
 
-            // Check if player in detection range
             if (distanceToPlayer <= detectionRange)
             {
-                // Attack if in range
                 if (distanceToPlayer <= attackRange)
                 {
                     agent.isStopped = true;
-                    
-                    // Face player
+                    agent.speed = 0f;
+                    // Smoothly lerp animation speed to 0 for blend tree
+                    currentSpeed = Mathf.Lerp(currentSpeed, 0f, 1 - Mathf.Exp(-Time.deltaTime / SpeedSmoothTime));
+
+                    // Face player only when stopped (attack)
                     Vector3 direction = (player.position - transform.position).normalized;
                     direction.y = 0;
                     if (direction != Vector3.zero)
@@ -117,11 +123,10 @@ namespace Maskbound.Core
                         transform.rotation = Quaternion.Slerp(
                             transform.rotation, 
                             Quaternion.LookRotation(direction), 
-                            Time.deltaTime * 5f
+                            Time.deltaTime * 15f
                         );
                     }
 
-                    // Attack
                     if (Time.time - lastAttackTime >= attackCooldown)
                     {
                         PerformAttack();
@@ -129,16 +134,18 @@ namespace Maskbound.Core
                 }
                 else
                 {
-                    // Chase player
                     agent.isStopped = false;
-                    agent.speed = chaseSpeed;
+                    // Exponential acceleration toward chaseSpeed
+                    currentSpeed = Mathf.Lerp(currentSpeed, chaseSpeed, 1 - Mathf.Exp(-Time.deltaTime / SpeedSmoothTime));
+                    agent.speed = currentSpeed;
                     agent.SetDestination(player.position);
                 }
             }
             else
             {
                 // Patrol or idle
-                agent.speed = patrolSpeed;
+                currentSpeed = Mathf.Lerp(currentSpeed, patrolSpeed, 1 - Mathf.Exp(-Time.deltaTime / SpeedSmoothTime));
+                agent.speed = currentSpeed;
                 // Add patrol logic here if desired
             }
         }
@@ -146,9 +153,7 @@ namespace Maskbound.Core
         private void UpdateAnimations()
         {
             if (animator == null) return;
-
-            float speed = agent != null ? agent.velocity.magnitude : 0f;
-            animator.SetFloat(animIDSpeed, speed);
+            animator.SetFloat(animIDSpeed, currentSpeed);
         }
 
         private void PerformAttack()
@@ -192,6 +197,9 @@ namespace Maskbound.Core
 
             currentHealth -= damage;
 
+            // Fire health changed event
+            OnHealthChanged.Invoke(currentHealth / maxHealth);
+
             // Play hit animation
             if (animator != null && !isStunned)
             {
@@ -214,6 +222,9 @@ namespace Maskbound.Core
 
             isDead = true;
 
+            // Fire health changed event (0 health)
+            OnHealthChanged.Invoke(0f);
+
             // Play death animation
             if (animator != null)
             {
@@ -234,10 +245,8 @@ namespace Maskbound.Core
                 col.enabled = false;
             }
 
-            // Drop items
-            DropLoot();
-
             // Destroy after delay
+            EnemyManager.Instance.UnregisterEnemy(gameObject);
             Destroy(gameObject, 3f);
         }
 
@@ -257,19 +266,7 @@ namespace Maskbound.Core
             StartCoroutine(StunEffect(duration));
         }
 
-        private void DropLoot()
-        {
-            if (dropItems.Length == 0) return;
-
-            for (int i = 0; i < dropCount; i++)
-            {
-                GameObject item = dropItems[Random.Range(0, dropItems.Length)];
-                Vector3 dropPosition = transform.position + Random.insideUnitSphere * 0.5f;
-                dropPosition.y = transform.position.y;
-                
-                Instantiate(item, dropPosition, Quaternion.identity);
-            }
-        }
+       
 
         private System.Collections.IEnumerator FlashRed()
         {
@@ -315,19 +312,7 @@ namespace Maskbound.Core
                 yield return null;
             }
         }
-
-        private void OnCollisionEnter(Collision collision)
-        {
-            // Deal contact damage to player
-            if (collision.gameObject.CompareTag("Player"))
-            {
-                IDamageable playerDamageable = collision.gameObject.GetComponent<IDamageable>();
-                if (playerDamageable != null)
-                {
-                    playerDamageable.TakeDamage(contactDamage);
-                }
-            }
-        }
+        
 
         private void OnDrawGizmosSelected()
         {
