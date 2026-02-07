@@ -48,6 +48,7 @@ namespace Maskbound.Core
         private int animIDAttack;
         private int animIDHit;
         private int animIDDeath;
+        private int animIDIsDead;
 
         public UnityEvent<float> OnHealthChanged = new UnityEvent<float>();
 
@@ -86,6 +87,7 @@ namespace Maskbound.Core
             animIDAttack = Animator.StringToHash("Attack");
             animIDHit = Animator.StringToHash("Hit");
             animIDDeath = Animator.StringToHash("Death");
+            animIDIsDead = Animator.StringToHash("IsDead"); // New bool parameter
         }
 
         private void UpdateStunState()
@@ -193,15 +195,15 @@ namespace Maskbound.Core
 
         public void TakeDamage(float damage)
         {
-            if (isDead) return;
+            if (isDead) return; // Prevent taking damage if already dead
 
             currentHealth -= damage;
 
             // Fire health changed event
             OnHealthChanged.Invoke(currentHealth / maxHealth);
 
-            // Play hit animation
-            if (animator != null && !isStunned)
+            // Play hit animation only if not dead after damage
+            if (!isDead && animator != null && !isStunned)
             {
                 animator.SetTrigger(animIDHit);
             }
@@ -225,9 +227,10 @@ namespace Maskbound.Core
             // Fire health changed event (0 health)
             OnHealthChanged.Invoke(0f);
 
-            // Play death animation
+            // Set IsDead bool in animator
             if (animator != null)
             {
+                animator.SetBool(animIDIsDead, true);
                 animator.SetTrigger(animIDDeath);
             }
 
