@@ -1,0 +1,9 @@
+﻿// This is a Unity Animator Controller asset for the Enemy character.
+// Parameters: Speed (float), Attack (trigger), Hit (trigger), Death (trigger)
+// Add animation clips for Idle, Walk, Attack, Hit, Death as needed in Unity Editor.
+// To use: Assign this controller to the Enemy's Animator component.
+
+// NOTE: This is a placeholder text file. In Unity, create the actual Animator Controller asset via:
+// Right-click in Project window > Create > Animator Controller > Name: Enemy.controller
+// Then add parameters and states as described above.
+

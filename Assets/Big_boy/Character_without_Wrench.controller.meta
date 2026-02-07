@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 61b109a4299c0a8449fccd479a39c71b
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 9100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 306632
+  packageName: Big Boy
+  packageVersion: 1.0
+  assetPath: Assets/Big_boy/Character_without_Wrench.controller
+  uploadId: 720788

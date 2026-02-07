@@ -404,6 +404,7 @@ public class ThirdPersonController : MonoBehaviour
     {
         if (value.isPressed && combatSystem != null)
         {
+            FindFirstObjectByType<Enemy>().TakeDamage(10); 
             combatSystem.PerformAttack();
         }
     }
