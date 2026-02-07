@@ -1855,7 +1855,7 @@ GameObject:
   - component: {fileID: 6785785001331977861}
   - component: {fileID: 5501735569393997173}
   - component: {fileID: 2329048775601393807}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Big_Boy_with_Wrench_Skin3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
