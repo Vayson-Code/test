@@ -432,11 +432,17 @@ public class ThirdPersonController : MonoBehaviour
     {
         if (value.isPressed && combatSystem != null)
         {
-            FindFirstObjectByType<Enemy>().TakeDamage(10); 
             combatSystem.PerformAttack();
         }
     }
 
+    public void OnHeavyAttack(InputValue value)
+    {
+        if (value.isPressed && combatSystem != null)
+        {
+            combatSystem.PerformHeavyAttack();
+        }
+    }
     public void OnAbility(InputValue value)
     {
         if (value.isPressed && playerSkillsManager != null && playerSkillsManager.HasCurrentMaskAbility(0))
