@@ -1,4 +1,5 @@
 using Maskbound.Core;
+using Maskbound.Scripts.Core;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -41,9 +42,8 @@ public class ThirdPersonController : MonoBehaviour
     [SerializeField] private Rigidbody rb;
     [SerializeField] private Animator animator;
     [SerializeField] private CombatSystem combatSystem;
-    [SerializeField] private MaskManager maskManager;
     [SerializeField] private PlayerInput playerInput;
-
+    [SerializeField] private PlayerSkillsManager playerSkillsManager;
     private Vector2 moveInput;
     private Vector3 moveDirection;
     private Vector3 smoothMoveDirection;
@@ -410,20 +410,12 @@ public class ThirdPersonController : MonoBehaviour
 
     public void OnAbility(InputValue value)
     {
-        if (value.isPressed && maskManager != null)
+        if (value.isPressed && playerSkillsManager != null && playerSkillsManager.HasCurrentMaskAbility(0))
         {
-            maskManager.UseCurrentMaskAbility();
+           playerSkillsManager.GetSkillsArray()[0].ApplyEffect(gameObject);
         }
     }
-
-    public void OnSwitchMask(InputValue value)
-    {
-        if (value.isPressed && maskManager != null)
-        {
-            maskManager.CycleToNextMask();
-        }
-    }
-    
+    // Additional input handlers for skills can be added here, following the same pattern
     #endregion
 
     private void OnDrawGizmosSelected()
