@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: cbdc003670fc6724084ffc8b3c109693
+timeCreated: 1466163065
+licenseType: Store
+TextScriptImporter:
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 63700
+  packageName: PolyCount
+  packageVersion: 1.0.3
+  assetPath: Assets/BrokenVector/PolyCount/readme.txt
+  uploadId: 175486
