@@ -9,21 +9,35 @@ namespace Maskbound.Core
     {
         [Header("Combat Settings")]
         [SerializeField] private float comboResetTime = 1.5f;
-        [SerializeField] private float attackCooldown = 0.1f;
-        [SerializeField] private int maxComboCount = 4;
+        [SerializeField] private float attackCooldown = 0.5f;
+        [SerializeField] private int maxLightCombo = 4;
 
         [Header("Attack Detection")]
         [SerializeField] private Transform attackPoint;
-        [SerializeField] private float attackRange = 1.5f;
+        [SerializeField] private float lightAttackRange = 1.5f;
+        [SerializeField] private float heavyAttackRange = 2.0f;
         [SerializeField] private LayerMask enemyLayers;
 
         [Header("Damage Settings")]
-        [SerializeField] private float[] comboDamage = { 10f, 15f, 20f, 30f };
-        [SerializeField] private float heavyAttackMultiplier = 1.5f;
+        [SerializeField] private float[] lightComboDamage = { 10f, 12f, 15f, 20f };
+        [SerializeField] private float heavyAttackDamage = 35f;
 
+        [Header("Attack Properties")]
+        [Tooltip("How long a light attack animation takes to complete")]
+        [SerializeField] private float lightAttackDuration = 0.6f;
+        
+        [Tooltip("How long a heavy attack animation takes to complete")]
+        [SerializeField] private float heavyAttackDuration = 1.2f;
+        
+        [Tooltip("When during an attack the player can buffer the next input (0.3 = 30% through animation)")]
+        [SerializeField] private float comboWindowStart = 0.3f;
+        
+        [Tooltip("Time after attack ends before movement is allowed (prevents sliding)")]
+        [SerializeField] private float attackRecoveryTime = 0.2f;
+        
         [Header("Hit Effects")]
         [SerializeField] private float hitStopDuration = 0.06f;
-        [SerializeField] private float cameraShakeMagnitude = 0.2f;
+        [SerializeField] private float heavyHitStopDuration = 0.12f;
 
         // Components
         [SerializeField] private Animator animator;
@@ -35,12 +49,18 @@ namespace Maskbound.Core
         private float comboResetTimer;
         private bool canAttack = true;
         private bool isAttacking = false;
+        private bool hasQueuedAttack = false;
+        private bool isHeavyQueued = false;
+        private float currentAttackEndTime;
 
         // Animation hashes
-        private int animIDAttack;
-        private int animIDComboIndex;
+        private int animIDLightAttack1;
+        private int animIDLightAttack2;
+        private int animIDLightAttack3;
+        private int animIDLightAttack4;
         private int animIDHeavyAttack;
         private int animIDInCombat;
+        private int animIDAttackSpeed;
 
         // Events
         public event Action<int> OnComboIncreased;
@@ -60,14 +80,26 @@ namespace Maskbound.Core
         {
             UpdateComboTimer();
             UpdateCombatState();
+            ProcessQueuedAttacks();
         }
 
         private void AssignAnimationIDs()
         {
-            animIDAttack = Animator.StringToHash("Attack");
-            animIDComboIndex = Animator.StringToHash("ComboIndex");
+            // Light combo attacks
+            animIDLightAttack1 = Animator.StringToHash("LightAttack1");
+            animIDLightAttack2 = Animator.StringToHash("LightAttack2");
+            animIDLightAttack3 = Animator.StringToHash("LightAttack3");
+            animIDLightAttack4 = Animator.StringToHash("LightAttack4");
+            
             animIDHeavyAttack = Animator.StringToHash("HeavyAttack");
             animIDInCombat = Animator.StringToHash("InCombat");
+            animIDAttackSpeed = Animator.StringToHash("AttackSpeed");
+            
+            // Set combat layer weight (layer 1) to blend with movement
+            if (animator != null && animator.layerCount > 1)
+            {
+                animator.SetLayerWeight(1, 1f); // Combat layer at full weight
+            }
         }
 
         private void UpdateComboTimer()
@@ -92,17 +124,66 @@ namespace Maskbound.Core
             }
         }
 
+        private void ProcessQueuedAttacks()
+        {
+            if (hasQueuedAttack && Time.time >= currentAttackEndTime)
+            {
+                hasQueuedAttack = false;
+                
+                if (isHeavyQueued)
+                {
+                    ExecuteHeavyAttack();
+                }
+                else
+                {
+                    ExecuteLightAttack();
+                }
+            }
+        }
+
         public void PerformAttack()
         {
-            if (!canAttack || isAttacking) return;
+            if (isAttacking)
+            {
+                // Buffer the attack if we're in combo window
+                if (Time.time >= lastAttackTime + comboWindowStart && !hasQueuedAttack)
+                {
+                    hasQueuedAttack = true;
+                    isHeavyQueued = false;
+                }
+                return;
+            }
 
-            StartCoroutine(AttackRoutine(false));
+            if (!canAttack) return;
+
+            ExecuteLightAttack();
         }
 
         public void PerformHeavyAttack()
         {
-            if (!canAttack || isAttacking) return;
+            if (isAttacking)
+            {
+                // Buffer heavy attack
+                if (Time.time >= lastAttackTime + comboWindowStart && !hasQueuedAttack)
+                {
+                    hasQueuedAttack = true;
+                    isHeavyQueued = true;
+                }
+                return;
+            }
 
+            if (!canAttack) return;
+
+            ExecuteHeavyAttack();
+        }
+
+        private void ExecuteLightAttack()
+        {
+            StartCoroutine(AttackRoutine(false));
+        }
+
+        private void ExecuteHeavyAttack()
+        {
             StartCoroutine(AttackRoutine(true));
         }
 
@@ -115,43 +196,91 @@ namespace Maskbound.Core
 
             EnterCombat();
 
-            // Trigger animation
+            float totalDuration;
+            
+            // Trigger appropriate animation
             if (isHeavy)
             {
                 animator.SetTrigger(animIDHeavyAttack);
+                totalDuration = heavyAttackDuration;
+                currentAttackEndTime = Time.time + totalDuration;
+                
+                // Wait for animation to complete
+                yield return new WaitForSeconds(totalDuration);
+                
+                // Add recovery time before allowing movement
+                yield return new WaitForSeconds(attackRecoveryTime);
+                
+                ResetCombo();
             }
             else
             {
-                animator.SetInteger(animIDComboIndex, currentComboIndex);
-                animator.SetTrigger(animIDAttack);
+                // Trigger specific light attack based on combo index
+                TriggerLightComboAnimation(currentComboIndex);
+                totalDuration = lightAttackDuration;
+                currentAttackEndTime = Time.time + totalDuration;
+                
+                // Increment combo
+                currentComboIndex++;
+                if (currentComboIndex >= maxLightCombo)
+                {
+                    currentComboIndex = 0;
+                }
+                OnComboIncreased?.Invoke(currentComboIndex);
+                
+                // Wait for animation to complete
+                yield return new WaitForSeconds(totalDuration);
+                
+                // Add recovery time before allowing movement
+                yield return new WaitForSeconds(attackRecoveryTime);
             }
-
-            // Increment combo
-            currentComboIndex = Mathf.Min(currentComboIndex + 1, maxComboCount - 1);
-            OnComboIncreased?.Invoke(currentComboIndex);
-
-            // Wait for animation event to trigger hit detection
-            yield return new WaitForSeconds(attackCooldown);
 
             canAttack = true;
             isAttacking = false;
         }
 
+        private void TriggerLightComboAnimation(int comboStep)
+        {
+            switch (comboStep)
+            {
+                case 0:
+                    animator.SetTrigger(animIDLightAttack1);
+                    break;
+                case 1:
+                    animator.SetTrigger(animIDLightAttack2);
+                    break;
+                case 2:
+                    animator.SetTrigger(animIDLightAttack3);
+                    break;
+                case 3:
+                    animator.SetTrigger(animIDLightAttack4);
+                    break;
+            }
+        }
+
         // Called by animation event
         public void OnAttackHit()
         {
-            DetectHits();
+            DetectHits(false);
         }
 
-        private void DetectHits()
+        // Called by heavy attack animation event
+        public void OnHeavyAttackHit()
+        {
+            DetectHits(true);
+        }
+
+        private void DetectHits(bool isHeavy)
         {
             if (attackPoint == null) return;
 
-            Collider[] hitEnemies = Physics.OverlapSphere(attackPoint.position, attackRange, enemyLayers);
+            float range = isHeavy ? heavyAttackRange : lightAttackRange;
+            Collider[] hitEnemies = Physics.OverlapSphere(attackPoint.position, range, enemyLayers);
 
             foreach (Collider enemy in hitEnemies)
             {
-                float damage = comboDamage[Mathf.Min(currentComboIndex, comboDamage.Length - 1)];
+                float damage = isHeavy ? heavyAttackDamage : 
+                               lightComboDamage[Mathf.Min(currentComboIndex - 1, lightComboDamage.Length - 1)];
                 
                 // Apply damage
                 IDamageable damageable = enemy.GetComponent<IDamageable>();
@@ -161,35 +290,29 @@ namespace Maskbound.Core
                     OnHitEnemy?.Invoke(enemy.gameObject, damage);
                     
                     // Apply hit effects
-                    ApplyHitEffects();
+                    ApplyHitEffects(isHeavy);
                 }
             }
         }
 
-        private void ApplyHitEffects()
+        private void ApplyHitEffects(bool isHeavy)
         {
-            StartCoroutine(HitStopRoutine());
-            CameraShake();
+            float stopDuration = isHeavy ? heavyHitStopDuration : hitStopDuration;
+            StartCoroutine(HitStopRoutine(stopDuration));
         }
 
-        private IEnumerator HitStopRoutine()
+        private IEnumerator HitStopRoutine(float duration)
         {
             Time.timeScale = 0.05f;
-            yield return new WaitForSecondsRealtime(hitStopDuration);
+            yield return new WaitForSecondsRealtime(duration);
             Time.timeScale = 1f;
-        }
-
-        private void CameraShake()
-        {
-            // Implement camera shake if you have a camera shake system
-            // Example: CameraShakeManager.Instance?.ShakeCamera(cameraShakeMagnitude, 0.1f);
         }
 
         private void ResetCombo()
         {
             currentComboIndex = 0;
             comboResetTimer = 0f;
-            animator.SetInteger(animIDComboIndex, 0);
+            hasQueuedAttack = false;
             OnComboReset?.Invoke();
         }
 
@@ -217,13 +340,23 @@ namespace Maskbound.Core
             if (attackPoint != null)
             {
                 Gizmos.color = Color.red;
-                Gizmos.DrawWireSphere(attackPoint.position, attackRange);
+                Gizmos.DrawWireSphere(attackPoint.position, lightAttackRange);
+                
+                Gizmos.color = Color.yellow;
+                Gizmos.DrawWireSphere(attackPoint.position, heavyAttackRange);
             }
         }
 
         #region Public API
         public void SetCanAttack(bool value) => canAttack = value;
         public void ForceResetCombo() => ResetCombo();
+        public void CancelAttack()
+        {
+            StopAllCoroutines();
+            isAttacking = false;
+            canAttack = true;
+            hasQueuedAttack = false;
+        }
         #endregion
     }
 

@@ -12,6 +12,7 @@ public class ThirdPersonController : MonoBehaviour
     [SerializeField] private float runSpeed = 3f;
     [SerializeField] private float sprintSpeed = 8f;
     [SerializeField] private float rotationSpeed = 2f;
+    [SerializeField] private CapsuleCollider characterCollider;
     
     [Header("Acceleration/Deceleration")]
     [SerializeField] private float accelerationTime = 0.3f;
@@ -135,7 +136,10 @@ public class ThirdPersonController : MonoBehaviour
     private void FixedUpdate()
     {
         // Physics calculations should be in FixedUpdate
-        HandleMovement();
+        if(!IsAgainstWall())
+        {
+            HandleMovement();
+        }
         HandleGravity();
     }
 
@@ -186,6 +190,31 @@ public class ThirdPersonController : MonoBehaviour
             jumpRequested = false;
         }
     }
+    
+    private bool IsAgainstWall()
+    {
+        // Create a capsule check with larger radius and smaller height than character
+        float radius = characterCollider.radius * 1.2f; // 20% larger radius
+        float height = characterCollider.height * 0.8f; // 20% smaller height
+    
+        // Calculate the two sphere centers of the capsule (top and bottom)
+        Vector3 center = transform.position + characterCollider.center;
+        float halfHeight = (height / 2f) - radius;
+    
+        Vector3 point1 = center + Vector3.up * halfHeight;  // Top sphere
+        Vector3 point2 = center - Vector3.up * halfHeight;  // Bottom sphere
+    
+        bool againstWall = Physics.CheckCapsule(
+            point1, 
+            point2, 
+            radius, 
+            groundLayers, 
+            QueryTriggerInteraction.Ignore
+        );
+    
+        IsSliding = againstWall && !isGrounded && rb.linearVelocity.y < 0;
+        return IsSliding;
+    }
 
     private void HandleGravity()
     {
@@ -207,7 +236,25 @@ public class ThirdPersonController : MonoBehaviour
 
     private void HandleMovement()
     {
-        if (combatSystem != null && combatSystem.IsInAction) return;
+        // Block movement during attacks and prevent sliding
+        if (combatSystem != null && combatSystem.IsInAction)
+        {
+            // Zero out horizontal velocity to prevent sliding during attacks
+            Vector3 vel = rb.linearVelocity;
+            vel.x = 0f;
+            vel.z = 0f;
+            rb.linearVelocity = vel;
+            
+            // Reset movement variables
+            currentBaseSpeed = 0f;
+            targetBaseSpeed = 0f;
+            speedBonus = 0f;
+            timeMoving = 0f;
+            smoothMoveDirection = Vector3.zero;
+            moveDirection = Vector3.zero;
+            
+            return;
+        }
 
         float inputMagnitude = moveInput.magnitude;
         bool isMoving = inputMagnitude > INPUT_DEAD_ZONE;
@@ -408,6 +455,14 @@ public class ThirdPersonController : MonoBehaviour
         }
     }
 
+    public void OnHeavyAttack(InputValue value)
+    {
+        if (value.isPressed && combatSystem != null)
+        {
+            combatSystem.PerformHeavyAttack();
+        }
+    }
+    
     public void OnAbility(InputValue value)
     {
         if (value.isPressed && playerSkillsManager != null && playerSkillsManager.HasCurrentMaskAbility(0))
