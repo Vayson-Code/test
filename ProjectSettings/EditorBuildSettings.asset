@@ -12,14 +12,14 @@ EditorBuildSettings:
     path: Assets/Scenes/happy.unity
     guid: 2f0e260bc28bea64c877cc8516a69b05
   - enabled: 1
-    path: Assets/Scenes/Terror.unity
-    guid: b43d00bb41a040f498bca39e52a07f77
+    path: Assets/Flooded_Grounds/Scenes/Scene_A.unity
+    guid: c0d944ca9defd20449bc336e50d75a08
   - enabled: 1
     path: Assets/Scenes/03 Survival.unity
     guid: 87bf1626ff33b2c418ceed4ec5f0181b
   - enabled: 1
-    path: Assets/Flooded_Grounds/Scenes/Scene_A.unity
-    guid: c0d944ca9defd20449bc336e50d75a08
+    path: Assets/Scenes/Terror.unity
+    guid: b43d00bb41a040f498bca39e52a07f77
   m_configObjects:
     com.unity.dt.app-ui: {fileID: 11400000, guid: 1b1c20d82303e4b5781c3ef50ac1449f, type: 2}
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 4aadfc20f5745f34c8e02d35229c6231, type: 3}
