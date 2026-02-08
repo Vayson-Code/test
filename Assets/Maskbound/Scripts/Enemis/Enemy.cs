@@ -136,7 +136,7 @@ namespace Maskbound.Core
                 }
                 else
                 {
-                    agent.isStopped = false;
+                    agent.isStopped = false; // Ensure agent is unstopped when chasing
                     // Exponential acceleration toward chaseSpeed
                     currentSpeed = Mathf.Lerp(currentSpeed, chaseSpeed, 1 - Mathf.Exp(-Time.deltaTime / SpeedSmoothTime));
                     agent.speed = currentSpeed;
@@ -145,6 +145,7 @@ namespace Maskbound.Core
             }
             else
             {
+                agent.isStopped = false; // Ensure agent is unstopped when patrolling
                 // Patrol or idle
                 currentSpeed = Mathf.Lerp(currentSpeed, patrolSpeed, 1 - Mathf.Exp(-Time.deltaTime / SpeedSmoothTime));
                 agent.speed = currentSpeed;
@@ -154,8 +155,9 @@ namespace Maskbound.Core
 
         private void UpdateAnimations()
         {
-            if (animator == null) return;
-            animator.SetFloat(animIDSpeed, currentSpeed);
+            if (animator == null || agent == null) return;
+            float actualSpeed = agent.velocity.magnitude;
+            animator.SetFloat(animIDSpeed, actualSpeed);
         }
 
         private void PerformAttack()
@@ -335,3 +337,5 @@ namespace Maskbound.Core
         #endregion
     }
 }
+
+// NOTE: Make sure 'Apply Root Motion' is DISABLED in the Animator for the enemy prefab in Unity. Otherwise, NavMeshAgent movement will not work.
