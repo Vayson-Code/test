@@ -11,7 +11,6 @@ namespace Maskbound.Core
         [SerializeField] private GameObject VfxPrefab; // Optional: assign a VFX prefab for pickup effect
         [SerializeField] private AudioClip pickupSound; // Optional: assign a pickup sound effect
         [SerializeField] private AudioSource audioSource; // Optional: assign an AudioSource for playing the sound
-        [SerializeField] private string SceneToLoadAfterPickup; // Optional: assign a scene name to load after pickup
         
         private bool isPickedUp = false;
 
@@ -62,12 +61,6 @@ namespace Maskbound.Core
             if (GameManager.Instance != null)
             {
                 GameManager.Instance.OnMaskObtained();
-            }
-
-            // 4. Load Scene if a name was provided
-            if (!string.IsNullOrEmpty(SceneToLoadAfterPickup))
-            {
-                SceneManager.LoadScene(SceneToLoadAfterPickup);
             }
         }
     }
