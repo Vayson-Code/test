@@ -2,10 +2,11 @@ using Maskbound.Core;
 using Maskbound.Scripts.Core;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.Events;
 
 [RequireComponent(typeof(Rigidbody))]
 [RequireComponent(typeof(PlayerInput))]
-public class ThirdPersonController : MonoBehaviour
+public class ThirdPersonController : MonoBehaviour, IDamageable
 {
     [Header("Movement Settings")]
     [SerializeField] private float walkSpeed = 2f;
@@ -32,6 +33,7 @@ public class ThirdPersonController : MonoBehaviour
     [SerializeField] private float coyoteTime = 0.12f;
     [SerializeField] private float jumpBufferTime = 0.12f;
     [SerializeField] private float airControlMultiplier = 0.5f;// 50% of ground speed while in air
+    
     [Header("Ground Check")]
     [SerializeField] private Transform groundCheck;
     [SerializeField] private float groundCheckRadius = 0.1f;
@@ -40,11 +42,23 @@ public class ThirdPersonController : MonoBehaviour
     [Header("Camera")]
     [SerializeField] private Transform cameraTransform;
 
+    [Header("Health System")]
+    [SerializeField] private float maxHealth = 100f;
+    [SerializeField] private float currentHealth;
+    [SerializeField] private float knockbackForce = 10f;
+    [SerializeField] private float knockbackDuration = 0.2f;
+
     [SerializeField] private Rigidbody rb;
     [SerializeField] private Animator animator;
     [SerializeField] private CombatSystem combatSystem;
     [SerializeField] private PlayerInput playerInput;
     [SerializeField] private PlayerSkillsManager playerSkillsManager;
+    
+    private bool isDead;
+    private float knockbackEndTime;
+    private Vector3 knockbackDirection;
+    private bool isKnockedBack;
+    
     private Vector2 moveInput;
     private Vector3 moveDirection;
     private Vector3 smoothMoveDirection;
@@ -68,6 +82,8 @@ public class ThirdPersonController : MonoBehaviour
     private int animIDMotionSpeed;
     private int animIDMoveX;
     private int animIDMoveY;
+    private int animIDHit;
+    private int animIDDeath;
 
     // Cached values
     private float cachedDeltaTime;
@@ -86,6 +102,10 @@ public class ThirdPersonController : MonoBehaviour
     public bool IsSprinting { get; private set; }
     public bool IsSliding { get; private set; }
     public bool InCombat => combatSystem != null && combatSystem.InCombat;
+    
+    // Health events
+    public UnityEvent<float> OnHealthChanged = new UnityEvent<float>();
+    public UnityEvent OnDeath = new UnityEvent();
 
     private void Awake()
     {
@@ -108,6 +128,9 @@ public class ThirdPersonController : MonoBehaviour
 
         AssignAnimationIDs();
         
+        // Initialize health
+        currentHealth = maxHealth;
+        isDead = false;
     }
 
     private void Start()
@@ -120,11 +143,14 @@ public class ThirdPersonController : MonoBehaviour
 
     private void Update()
     {
+        if (isDead) return;
+
         cachedDeltaTime = Time.deltaTime;
         
         CheckGrounded();
         HandleJumpBuffer();
         UpdateAnimations();
+        UpdateKnockback();
         
         // Update sprint state from input action
         if (sprintAction != null)
@@ -135,6 +161,8 @@ public class ThirdPersonController : MonoBehaviour
 
     private void FixedUpdate()
     {
+        if (isDead) return;
+
         // Physics calculations should be in FixedUpdate
         if(!IsAgainstWall())
         {
@@ -152,6 +180,8 @@ public class ThirdPersonController : MonoBehaviour
         animIDMotionSpeed = Animator.StringToHash("MotionSpeed");
         animIDMoveX = Animator.StringToHash("MoveX");
         animIDMoveY = Animator.StringToHash("MoveY");
+        animIDHit = Animator.StringToHash("Hit");
+        animIDDeath = Animator.StringToHash("Death");
     }
 
     private void CheckGrounded()
@@ -493,6 +523,142 @@ public class ThirdPersonController : MonoBehaviour
         }
     }
     // Additional input handlers for skills can be added here, following the same pattern
+    #endregion
+
+    #region Health and Damage System
+
+    private void UpdateKnockback()
+    {
+        if (!isKnockedBack) return;
+
+        if (Time.time >= knockbackEndTime)
+        {
+            isKnockedBack = false;
+            return;
+        }
+
+        // Apply knockback force
+        rb.AddForce(knockbackDirection * knockbackForce, ForceMode.Acceleration);
+    }
+
+    public void TakeDamage(float damage)
+    {
+        if (isDead) return;
+
+        currentHealth -= damage;
+
+        // Invoke health changed event
+        OnHealthChanged.Invoke(currentHealth / maxHealth);
+
+        // Check for death first - if lethal, skip hit animation and go straight to death
+        if (currentHealth <= 0)
+        {
+            Die();
+            return;
+        }
+
+        // Play hit animation only if still alive
+        if (animator != null)
+        {
+            animator.SetTrigger(animIDHit);
+        }
+
+        // Visual feedback
+        StartCoroutine(FlashRed());
+
+        // Apply knockback
+        ApplyKnockback();
+
+
+        Debug.Log($"Player took {damage} damage. Current health: {currentHealth}/{maxHealth}");
+    }
+
+    private void ApplyKnockback()
+    {
+        isKnockedBack = true;
+        knockbackEndTime = Time.time + knockbackDuration;
+
+        // Get direction away from the attacker (approximate from last damage source)
+        // For simplicity, knockback is upward and backward
+        knockbackDirection = -moveDirection.normalized;
+        if (knockbackDirection == Vector3.zero)
+        {
+            knockbackDirection = -transform.forward;
+        }
+        knockbackDirection.y = 0.5f; // Add upward component
+    }
+
+    public void Die()
+    {
+        if (isDead) return;
+
+        isDead = true;
+
+        // Invoke health changed event
+        OnHealthChanged.Invoke(0f);
+
+        // Play death animation
+        if (animator != null)
+        {
+            animator.SetTrigger(animIDDeath);
+        }
+
+        // Disable input and movement
+        if (playerInput != null)
+        {
+            playerInput.enabled = false;
+        }
+
+        // Disable Rigidbody gravity to prevent falling
+        if (rb != null)
+        {
+            rb.isKinematic = true;
+        }
+
+        // Invoke death event
+        OnDeath.Invoke();
+
+        Debug.Log("Player died!");
+    }
+
+    private System.Collections.IEnumerator FlashRed()
+    {
+        Renderer[] renderers = GetComponentsInChildren<Renderer>();
+        Color[] originalColors = new Color[renderers.Length];
+
+        // Store original colors
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            if (renderers[i].material.HasProperty("_Color"))
+            {
+                originalColors[i] = renderers[i].material.color;
+            }
+        }
+
+        // Flash red
+        foreach (Renderer r in renderers)
+        {
+            if (r.material.HasProperty("_Color"))
+            {
+                r.material.color = Color.red;
+            }
+        }
+
+        yield return new WaitForSeconds(0.1f);
+
+        // Return to original colors
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            if (renderers[i].material.HasProperty("_Color"))
+            {
+                renderers[i].material.color = originalColors[i];
+            }
+        }
+    }
+
+    public float GetHealthPercentage() => currentHealth / maxHealth;
+    public bool IsDead() => isDead;
+
     #endregion
 
     private void OnDrawGizmosSelected()
