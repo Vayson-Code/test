@@ -14,6 +14,7 @@ public class ThirdPersonController : MonoBehaviour, IDamageable
     [SerializeField] private float sprintSpeed = 8f;
     [SerializeField] private float rotationSpeed = 2f;
     [SerializeField] private CapsuleCollider characterCollider;
+    [SerializeField] private BoxCollider characterboxCollider;
     
     [Header("Acceleration/Deceleration")]
     [SerializeField] private float accelerationTime = 0.3f;
@@ -600,6 +601,8 @@ public class ThirdPersonController : MonoBehaviour, IDamageable
         // Play death animation
         if (animator != null)
         {
+            characterboxCollider.enabled=true;
+            characterCollider.enabled=false;
             animator.SetTrigger(animIDDeath);
         }
 
@@ -607,12 +610,6 @@ public class ThirdPersonController : MonoBehaviour, IDamageable
         if (playerInput != null)
         {
             playerInput.enabled = false;
-        }
-
-        // Disable Rigidbody gravity to prevent falling
-        if (rb != null)
-        {
-            rb.isKinematic = true;
         }
 
         // Invoke death event

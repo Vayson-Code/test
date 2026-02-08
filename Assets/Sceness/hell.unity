@@ -188,6 +188,7 @@ GameObject:
   - component: {fileID: 130824357}
   - component: {fileID: 130824359}
   - component: {fileID: 130824358}
+  - component: {fileID: 130824364}
   - component: {fileID: 130824356}
   - component: {fileID: 130824360}
   - component: {fileID: 130824361}
@@ -236,6 +237,7 @@ MonoBehaviour:
   sprintSpeed: 8
   rotationSpeed: 2
   characterCollider: {fileID: 130824358}
+  characterboxCollider: {fileID: 130824364}
   accelerationTime: 0.3
   decelerationTime: 0.2
   directionChangeSharpness: 8
@@ -427,15 +429,38 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fb6f951eb22f4577bb714dc4345b1268, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Maskbound.Core.LockOnManager
+  freeLookCam: {fileID: 0}
+  lockOnCam: {fileID: 0}
   lockOnRadius: 10
+  lookRotationSpeed: 10
   enemyLayer:
     serializedVersion: 2
     m_Bits: 128
   playerTransform: {fileID: 130824352}
-  cinemachineCam: {fileID: 1202864451}
   lockOnUIWorldPrefab: {fileID: 2899600142093744423, guid: 36a3cc1033c2acf4f80c7f8749c3a26a, type: 3}
   lockOnUIHeight: 1
   uiOffsetTowardCamera: 0.5
+--- !u!65 &130824364
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 130824351}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 0
+  serializedVersion: 3
+  m_Size: {x: 0.58923936, y: 0.08177052, z: 0.32013753}
+  m_Center: {x: 0, y: 1.03, z: 0.013021067}
 --- !u!1001 &147092319
 PrefabInstance:
   m_ObjectHideFlags: 0
