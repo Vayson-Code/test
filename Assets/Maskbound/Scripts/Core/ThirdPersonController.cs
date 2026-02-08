@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using Maskbound.Core;
 using Maskbound.Scripts.Core;
 using UnityEngine;
@@ -45,11 +46,17 @@ public class ThirdPersonController : MonoBehaviour, IDamageable
     [SerializeField] private Transform cameraTransform;
 
     [Header("Health System")]
-    [SerializeField] private float maxHealth = 100f;
+    [SerializeField] private float maxHealth = 1000f;
     [SerializeField] private float currentHealth;
+    [SerializeField] private float regenRate = 5f;          // Health per second
+    [SerializeField] private float regenStartDelay = 3f;    // Seconds to wait after hit
+    [SerializeField] private bool canRegen = true;
+    
     [SerializeField] private float knockbackForce = 10f;
     [SerializeField] private float knockbackDuration = 0.2f;
 
+    private Coroutine regenCoroutine;
+    
     [SerializeField] private Rigidbody rb;
     [SerializeField] private Animator animator;
     [SerializeField] private CombatSystem combatSystem;
@@ -566,6 +573,10 @@ public class ThirdPersonController : MonoBehaviour, IDamageable
 
         currentHealth -= damage;
 
+        // Stop any existing regen when hit and restart the delay
+        if (regenCoroutine != null) StopCoroutine(regenCoroutine);
+        regenCoroutine = StartCoroutine(HealthRegenRoutine());
+        
         // Invoke health changed event
         OnHealthChanged?.Invoke(this, new ddHealthChangedEventArgs(){hp=currentHealth / maxHealth} );
 
@@ -590,6 +601,27 @@ public class ThirdPersonController : MonoBehaviour, IDamageable
 
 
         Debug.Log($"Player took {damage} damage. Current health: {currentHealth}/{maxHealth}");
+    }
+    
+    // The Regen Logic
+    private IEnumerator HealthRegenRoutine()
+    {
+        // 1. Wait for the delay period after being hit
+        yield return new WaitForSeconds(regenStartDelay);
+
+        // 2. Start regenerating until health is full
+        while (currentHealth < maxHealth && !isDead)
+        {
+            currentHealth += regenRate * Time.deltaTime;
+        
+            // Clamp to max health
+            if (currentHealth > maxHealth) currentHealth = maxHealth;
+
+            // Update UI
+            OnHealthChanged?.Invoke(this, new ddHealthChangedEventArgs(){hp = currentHealth / maxHealth});
+
+            yield return null; // Wait for next frame
+        }
     }
 
     private void ApplyKnockback()
