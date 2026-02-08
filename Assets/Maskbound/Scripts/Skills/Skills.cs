@@ -8,6 +8,7 @@ namespace Maskbound.Scripts.Skills
         public string skillName;
         public string description;
         public Sprite icon;
+        public float cooldown;
         
             // Method to apply the skill's effect to the player
             public virtual void ApplyEffect(GameObject player)

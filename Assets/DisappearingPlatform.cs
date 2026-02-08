@@ -1,7 +1,7 @@
 using UnityEngine;
 using System.Collections;
 
-public class DisappearingPlatform : MonoBehaviour
+public class DisappearingPlatform2 : MonoBehaviour
 {
     [Header("Timing")]
     public float disappearDelay = 2f;   // ⏱ delay BEFORE disappearing 

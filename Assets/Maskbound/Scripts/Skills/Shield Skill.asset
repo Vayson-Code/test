@@ -15,4 +15,6 @@ MonoBehaviour:
   skillName: Shield Skill
   description: 
   icon: {fileID: 0}
+  cooldown: 15
   shieldDuration: 5
+  effectPrefab: {fileID: 7314526620251459061, guid: ccf28ea29cf499744ac31bab90073aba, type: 3}

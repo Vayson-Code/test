@@ -6,19 +6,23 @@ public class Mask : MonoBehaviour
     public float speed = 6f;
     public float lifeTime = 6f;
 
+    [Header("Direction (set by spawner)")]
+    public Vector3 moveDir = Vector3.forward;
+
     [Header("Knockback")]
-    public float pushForce = 14f;          // increase for stronger push
-    public float upwardPop = 2f;           // little pop upward
+    public float pushForce = 14f;
+    public float upwardPop = 2f;
     public float dodgeHeightTolerance = 0.25f;
 
     [Header("Feel")]
-    public bool resetHorizontalVelocity = true; // makes push feel stronger/cleaner
+    public bool resetHorizontalVelocity = true;
 
     private float timer;
 
     void Update()
     {
-        transform.position += transform.forward * speed * Time.deltaTime;
+        // MOVE USING moveDir (NOT transform.forward)
+        transform.position += moveDir.normalized * speed * Time.deltaTime;
 
         timer += Time.deltaTime;
         if (timer >= lifeTime)
@@ -36,24 +40,20 @@ public class Mask : MonoBehaviour
         float maskTop = maskCol.bounds.max.y;
         float playerBottom = playerCol.bounds.min.y;
 
-        // Player is above → dodge (jumped it)
         if (playerBottom > maskTop - dodgeHeightTolerance)
         {
             Rigidbody prb = col.rigidbody;
             if (prb != null)
-            {
                 prb.linearVelocity = new Vector3(prb.linearVelocity.x, Mathf.Max(prb.linearVelocity.y, 6f), prb.linearVelocity.z);
-            }
 
             Destroy(gameObject);
             return;
         }
 
-        // Push player in the SAME direction the mask moves
         Rigidbody rb = col.rigidbody;
         if (rb != null)
         {
-            Vector3 pushDir = transform.forward;
+            Vector3 pushDir = moveDir;
             pushDir.y = 0f;
             pushDir.Normalize();
 
