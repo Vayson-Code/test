@@ -255,11 +255,21 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 64
   cameraTransform: {fileID: 330585546}
+  maxHealth: 100
+  currentHealth: 0
+  knockbackForce: 10
+  knockbackDuration: 0.2
   rb: {fileID: 130824359}
   animator: {fileID: 917798690}
   combatSystem: {fileID: 917798692}
   playerInput: {fileID: 130824357}
   playerSkillsManager: {fileID: 0}
+  OnHealthChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  OnDeath:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!114 &130824357
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -412,7 +422,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 130824351}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fb6f951eb22f4577bb714dc4345b1268, type: 3}
   m_Name: 
@@ -1379,7 +1389,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Maskbound.Core.CombatSystem
   comboResetTime: 1.5
-  attackCooldown: 0.5
+  attackCooldown: 0.3
   maxLightCombo: 4
   attackPointBlade: {fileID: 1498825506}
   attackPointHandle: {fileID: 568142731}
