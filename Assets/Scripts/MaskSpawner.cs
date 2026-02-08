@@ -28,18 +28,22 @@ public class MaskSpawner : MonoBehaviour
 
             GameObject m = Instantiate(maskPrefab, spawnPoint.position, Quaternion.identity);
 
-            Vector3 dir = moveDirection.normalized;
-            if (dir.sqrMagnitude < 0.001f)
-                dir = Vector3.forward;
+Vector3 dir = moveDirection.normalized;
+if (dir.sqrMagnitude < 0.001f)
+    dir = Vector3.forward;
 
-            m.transform.forward = dir;
+// set direction for movement WITHOUT using forward
+Mask mask = m.GetComponent<Mask>();
+if (mask != null)
+{
+    mask.moveDir = dir;
+    mask.speed = maskSpeed;
+    mask.lifeTime = maskLifeTime;
+}
 
-            Mask mask = m.GetComponent<Mask>();
-            if (mask != null)
-            {
-                mask.speed = maskSpeed;
-                mask.lifeTime = maskLifeTime;
-            }
+// now you can rotate the object visually and it will NOT affect movement
+m.transform.eulerAngles = new Vector3(-90f, m.transform.eulerAngles.y, 90f);
+
         }
     }
 }
