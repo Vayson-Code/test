@@ -15,7 +15,9 @@ namespace Maskbound.Core
             if (other.CompareTag("Player"))
             {
                 isPickedUp = true;
+                Debug.Log("Mask part picked up!");
                 StartCoroutine(HandleMaskPickup());
+                
             }
         }
 

@@ -54,6 +54,7 @@ namespace Maskbound.Scripts.Enemis
             if (maskPiecePrefab == null || lastEnemyKilled == null) return;
             Vector3 dropPosition = lastEnemyKilled.transform.position;
             Instantiate(maskPiecePrefab, dropPosition, Quaternion.identity);
+            Debug.Log("Mask piece dropped at: " + dropPosition);
         }
         #endregion
     }
