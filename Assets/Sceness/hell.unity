@@ -445,13 +445,20 @@ PrefabInstance:
       propertyPath: m_Name
       value: Hunter
       objectReference: {fileID: 0}
+    - target: {fileID: 8500954586859727198, guid: efffa0ca2a21b5f4b99a8a775304a150, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects:
     - targetCorrespondingSourceObject: {fileID: 1004886506212246163, guid: efffa0ca2a21b5f4b99a8a775304a150, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1255147289}
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 8500954586859727198, guid: efffa0ca2a21b5f4b99a8a775304a150, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 917798691}
   m_SourcePrefab: {fileID: 100100000, guid: efffa0ca2a21b5f4b99a8a775304a150, type: 3}
 --- !u!1 &228379493
 GameObject:
@@ -496,6 +503,7 @@ GameObject:
   - component: {fileID: 276125301}
   - component: {fileID: 276125300}
   - component: {fileID: 276125299}
+  - component: {fileID: 276125303}
   m_Layer: 6
   m_Name: Plane
   m_TagString: Untagged
@@ -597,6 +605,38 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &276125303
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 276125298}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7a5ac11cc976e418e8d13136b07e1f52, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.AI.Navigation::Unity.AI.Navigation.NavMeshSurface
+  m_SerializedVersion: 0
+  m_AgentTypeID: 0
+  m_CollectObjects: 0
+  m_Size: {x: 10, y: 10, z: 10}
+  m_Center: {x: 0, y: 2, z: 0}
+  m_LayerMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_UseGeometry: 0
+  m_DefaultArea: 0
+  m_GenerateLinks: 0
+  m_IgnoreNavMeshAgent: 1
+  m_IgnoreNavMeshObstacle: 1
+  m_OverrideTileSize: 0
+  m_TileSize: 256
+  m_OverrideVoxelSize: 0
+  m_VoxelSize: 0.16666667
+  m_MinRegionArea: 2
+  m_NavMeshData: {fileID: 23800000, guid: 4c6d09bbd98e0bb4786c2ce6b0b10e21, type: 2}
+  m_BuildHeightMesh: 0
 --- !u!1 &330585543
 GameObject:
   m_ObjectHideFlags: 0
@@ -1157,6 +1197,11 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1533417533}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &799946360 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8500954586859727198, guid: efffa0ca2a21b5f4b99a8a775304a150, type: 3}
+  m_PrefabInstance: {fileID: 147092319}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &832575517
 GameObject:
   m_ObjectHideFlags: 0
@@ -1232,6 +1277,20 @@ Animator:
   m_CorrespondingSourceObject: {fileID: 3888716729385167418, guid: efffa0ca2a21b5f4b99a8a775304a150, type: 3}
   m_PrefabInstance: {fileID: 147092319}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &917798691
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 799946360}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1aab6f9eb9036854b84cbf6a5de46b61, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RootMotionRedirect
+  parentRigidbody: {fileID: 130824359}
+  _animator: {fileID: 917798690}
 --- !u!1 &995825486
 GameObject:
   m_ObjectHideFlags: 0
