@@ -15,10 +15,10 @@ public class MainMenu : MonoBehaviour
         
     }
 
-    public void Play()
+    public void Play(string sceneName)
     {
         audioManager.PlayHitSound(audioManager.walk);
-        UnityEngine.SceneManagement.SceneManager.LoadScene("Game");
+        UnityEngine.SceneManagement.SceneManager.LoadScene(sceneName);
 
     }
 
@@ -34,5 +34,13 @@ public class MainMenu : MonoBehaviour
         panel.SetActive(!panel.activeSelf);
         
     }
+    public void TogglePanel3(GameObject currentPanel)
+    {
+
+        // Deactivate the current panel
+        if (currentPanel != null)
+            currentPanel.SetActive(false);
+    }
+
 
 }
