@@ -310,16 +310,27 @@ namespace Maskbound.Core
 
             foreach (Collider enemy in hitEnemies)
             {
-                float damage = isHeavy ? heavyAttackDamage : 
-                               lightComboDamage[Mathf.Min(currentComboIndex - 1, lightComboDamage.Length - 1)];
-                
+                float damage;
+                if (isHeavy)
+                {
+                    damage = heavyAttackDamage;
+                }
+                else
+                {
+                    // FIX: Clamp index to valid range (0 to array length - 1)
+                    // currentComboIndex is already incremented before hit detection
+                    // So we use (currentComboIndex - 1), but clamp it to prevent negative
+                    int damageIndex = Mathf.Clamp(currentComboIndex - 1, 0, lightComboDamage.Length - 1);
+                    damage = lightComboDamage[damageIndex];
+                }
+        
                 // Apply damage
                 IDamageable damageable = enemy.GetComponent<IDamageable>();
                 if (damageable != null)
                 {
                     damageable.TakeDamage(damage);
                     OnHitEnemy?.Invoke(enemy.gameObject, damage);
-                    
+            
                     // Apply hit effects
                     ApplyHitEffects(isHeavy);
                 }
