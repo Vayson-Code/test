@@ -17,7 +17,7 @@ namespace Maskbound.Scripts.Core
         public void RegenerateMap(object sender, GameManager.MaskObtainedEventArgs e)
         {
             // Load the next scene directly
-            SceneManager.LoadScene(mapSceneNames[e.newMapIndex]);
+            SceneManager.LoadScene(mapSceneNames[e.newMapIndex-1]);
         }
     }
 }

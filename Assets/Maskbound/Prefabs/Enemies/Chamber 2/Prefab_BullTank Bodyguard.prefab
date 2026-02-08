@@ -492,7 +492,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d897ee592cf8a6f4282930cdc1838554, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Maskbound.Core.Enemy
-  maxHealth: 200
+  maxHealth: 40
   showHealthBar: 1
   attackDamage: 50
   attackRange: 2.3
