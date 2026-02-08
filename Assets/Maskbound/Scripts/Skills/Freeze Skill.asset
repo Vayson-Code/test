@@ -15,6 +15,8 @@ MonoBehaviour:
   skillName: Freeze Skill
   description: 
   icon: {fileID: 0}
+  cooldown: 10
   freezeDuration: 2
   restoreDuration: 2
   minTimeScale: 0.01
+  effectPrefab: {fileID: 6441873369525384307, guid: 0f3d407feb92ebb49b98d0157de5008a, type: 3}

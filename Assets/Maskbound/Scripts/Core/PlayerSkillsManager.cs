@@ -1,6 +1,8 @@
 ﻿using UnityEngine;
 using System.Collections;
 using Maskbound.Scripts.Skills.Interfaces;
+using UnityEngine.UI;
+using Maskbound.Scripts.Skills;
 
 namespace Maskbound.Scripts.Core
 {
@@ -13,6 +15,11 @@ namespace Maskbound.Scripts.Core
         private Coroutine timeCoroutine;
         private float originalFixedDeltaTime;
         [SerializeField] private Skills.Skills[] skillsArray; // Array to define which masks unlock which abilities
+
+        [Header("Ability UI")]
+        [SerializeField] private Image[] abilityIcons,background; // Assign 3 circular images in Inspector
+
+        private bool[] abilityOnCooldown;
         #endregion
 
         public Skills.Skills[] GetSkillsArray() => skillsArray;
@@ -21,12 +28,24 @@ namespace Maskbound.Scripts.Core
         {
             // Store the original fixed delta time for time scale resets
             originalFixedDeltaTime = Time.fixedDeltaTime;
+            abilityOnCooldown = new bool[abilityIcons.Length];
         }
 
         private void OnDisable()
         {
             // Always reset time scale if this object is disabled
             ResetTimeScale();
+        }
+
+        private void Start()
+        {
+            // Enable only unlocked ability icons
+            for (int i = 0; i < abilityIcons.Length; i++)
+            {
+                bool unlocked = GameManager.Instance.CurrentMapIndex >= (i + 1);
+                background[i].gameObject.SetActive(unlocked);
+                abilityIcons[i].fillAmount = 1f; // Full at start
+            }
         }
         #endregion
 
@@ -104,6 +123,41 @@ namespace Maskbound.Scripts.Core
                 return true;
             else
               return false;
+        }
+
+        // Call this when an ability is used
+        public void StartAbilityCooldown(int abilityIndex)
+        {
+            if (abilityIndex < 0 || abilityIndex >= abilityIcons.Length) return;
+            if (abilityOnCooldown[abilityIndex]) return; // Prevent spamming
+            float cooldown = GetAbilityCooldown(abilityIndex);
+            StartCoroutine(AbilityCooldownRoutine(abilityIndex, cooldown));
+        }
+        private float GetAbilityCooldown(int index)
+        {
+            if (index < 0 || index >= skillsArray.Length || skillsArray[index] == null) return 0f;
+            return skillsArray[index].cooldown;
+        }
+        private IEnumerator AbilityCooldownRoutine(int index, float duration)
+        {
+            abilityOnCooldown[index] = true;
+            float timer = 0f;
+            abilityIcons[index].fillAmount = 0f;
+            while (timer < duration)
+            {
+                timer += Time.deltaTime;
+                abilityIcons[index].fillAmount = Mathf.Clamp01(timer / duration);
+                yield return null;
+            }
+            abilityIcons[index].fillAmount = 1f;
+            abilityOnCooldown[index] = false;
+        }
+
+        public bool IsAbilityOnCooldown(int i)
+        {
+            if (abilityOnCooldown == null || i < 0 || i >= abilityOnCooldown.Length) return false;
+            Debug.unityLogger.Log("IsAbilityOnCooldown", $"IsAbilityOnCooldown({i})");
+            return abilityOnCooldown[i];
         }
     }
 }

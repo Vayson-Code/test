@@ -1,3 +1,4 @@
+using System;
 using Maskbound.Core;
 using Maskbound.Scripts.Core;
 using UnityEngine;
@@ -105,7 +106,11 @@ public class ThirdPersonController : MonoBehaviour, IDamageable
     public bool InCombat => combatSystem != null && combatSystem.InCombat;
     
     // Health events
-    public UnityEvent<float> OnHealthChanged = new UnityEvent<float>();
+    public event EventHandler<ddHealthChangedEventArgs> OnHealthChanged ;
+    public class ddHealthChangedEventArgs : EventArgs
+    {
+       public float hp;
+    }
     public UnityEvent OnDeath = new UnityEvent();
 
     private void Awake()
@@ -488,24 +493,37 @@ public class ThirdPersonController : MonoBehaviour, IDamageable
 
     public void OnSkill1(InputValue value)
     {
-        if (value.isPressed && playerSkillsManager != null && GameManager.Instance.CurrentMapIndex>=1)
+        if (value.isPressed && playerSkillsManager != null && GameManager.Instance.CurrentMapIndex >= 1)
         {
-            playerSkillsManager.GetSkillsArray()[0].ApplyEffect(gameObject);
+            // Check cooldown
+            
+            if (!playerSkillsManager.IsAbilityOnCooldown(0))
+            {
+                playerSkillsManager.StartAbilityCooldown(0);
+                playerSkillsManager.GetSkillsArray()[0].ApplyEffect(gameObject);
+            }
         }
     }
     public void OnSkill2(InputValue value)
     {
-        if (value.isPressed && playerSkillsManager != null && GameManager.Instance.CurrentMapIndex>=2)
+        if (value.isPressed && playerSkillsManager != null && GameManager.Instance.CurrentMapIndex >= 2)
         {
-            playerSkillsManager.GetSkillsArray()[1].ApplyEffect(gameObject);
+            if (!playerSkillsManager.IsAbilityOnCooldown(1))
+            {
+                playerSkillsManager.StartAbilityCooldown(1);
+                playerSkillsManager.GetSkillsArray()[1].ApplyEffect(gameObject);
+            }
         }
     }
-
     public void OnSkill3(InputValue value)
     {
-        if (value.isPressed && playerSkillsManager != null && GameManager.Instance.CurrentMapIndex>=3)
+        if (value.isPressed && playerSkillsManager != null && GameManager.Instance.CurrentMapIndex >= 3)
         {
-            playerSkillsManager.GetSkillsArray()[2].ApplyEffect(gameObject);
+            if (!playerSkillsManager.IsAbilityOnCooldown(2))
+            {
+                playerSkillsManager.StartAbilityCooldown(2);
+                playerSkillsManager.GetSkillsArray()[2].ApplyEffect(gameObject);
+            }
         } 
     }
     public void OnHeavyAttack(InputValue value)
@@ -549,7 +567,7 @@ public class ThirdPersonController : MonoBehaviour, IDamageable
         currentHealth -= damage;
 
         // Invoke health changed event
-        OnHealthChanged.Invoke(currentHealth / maxHealth);
+        OnHealthChanged?.Invoke(this, new ddHealthChangedEventArgs(){hp=currentHealth / maxHealth} );
 
         // Check for death first - if lethal, skip hit animation and go straight to death
         if (currentHealth <= 0)
@@ -596,7 +614,7 @@ public class ThirdPersonController : MonoBehaviour, IDamageable
         isDead = true;
 
         // Invoke health changed event
-        OnHealthChanged.Invoke(0f);
+        OnHealthChanged?.Invoke(this,new ddHealthChangedEventArgs(){hp = 0f});
 
         // Play death animation
         if (animator != null)
@@ -689,3 +707,4 @@ public class ThirdPersonController : MonoBehaviour, IDamageable
     
     #endregion
 }
+
