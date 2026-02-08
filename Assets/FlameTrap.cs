@@ -43,12 +43,8 @@ public class FlameTrap : MonoBehaviour
         Debug.Log("Flame trap is active and something is in it.");
         if (other.CompareTag("Player"))
         {
-            //var hp = other.GetComponent<PlayerHealth>();
-            //if (hp != null)
-            //{
-                //hp.TakeDamage(damagePerSecond * Time.deltaTime);
-                Debug.Log($"Player takes {damagePerSecond * Time.deltaTime} damage from flame trap.");
-            //}
+            other.GetComponent<ThirdPersonController>().TakeDamage(1f * Time.deltaTime);
+
         }
     }
 }

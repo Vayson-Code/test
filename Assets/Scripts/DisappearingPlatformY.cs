@@ -1,7 +1,7 @@
 using UnityEngine;
 using System.Collections;
 
-public class DisappearingPlatform : MonoBehaviour
+public class DisappearingPlatformsY : MonoBehaviour
 {
     [Header("Timing")]
     public float respawnDelay = 5f;
