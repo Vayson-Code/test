@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b0bd4b4a9bfd42e1bcac0c14a2934efd, type: 3}
   m_Name: Freeze Skill
   m_EditorClassIdentifier: Assembly-CSharp::Maskbound.Scripts.Skills.TimeFreezeSkill
-  skillName: 
+  skillName: Freeze Skill
   description: 
   icon: {fileID: 0}
   freezeDuration: 2

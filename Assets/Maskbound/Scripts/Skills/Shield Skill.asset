@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5c009fbaf6d04a29ab48b7f2f56cf560, type: 3}
   m_Name: Shield Skill
   m_EditorClassIdentifier: Assembly-CSharp::Maskbound.Scripts.Skills.IceShieldSkill
-  skillName: 
+  skillName: Shield Skill
   description: 
   icon: {fileID: 0}
   shieldDuration: 5
