@@ -455,6 +455,28 @@ public class ThirdPersonController : MonoBehaviour
         }
     }
 
+    public void OnSkill1(InputValue value)
+    {
+        if (value.isPressed && playerSkillsManager != null && GameManager.Instance.CurrentMapIndex>=1)
+        {
+            playerSkillsManager.GetSkillsArray()[0].ApplyEffect(gameObject);
+        }
+    }
+    public void OnSkill2(InputValue value)
+    {
+        if (value.isPressed && playerSkillsManager != null && GameManager.Instance.CurrentMapIndex>=2)
+        {
+            playerSkillsManager.GetSkillsArray()[1].ApplyEffect(gameObject);
+        }
+    }
+
+    public void OnSkill3(InputValue value)
+    {
+        if (value.isPressed && playerSkillsManager != null && GameManager.Instance.CurrentMapIndex>=3)
+        {
+            playerSkillsManager.GetSkillsArray()[2].ApplyEffect(gameObject);
+        } 
+    }
     public void OnHeavyAttack(InputValue value)
     {
         if (value.isPressed && combatSystem != null)
