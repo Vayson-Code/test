@@ -13,10 +13,15 @@ namespace Maskbound.Core
         [SerializeField] private int maxLightCombo = 4;
 
         [Header("Attack Detection")]
-        [SerializeField] private Transform attackPoint;
+        [SerializeField] private Transform attackPointBlade; // For blade attacks (tip)
+        [SerializeField] private Transform attackPointHandle; // For handle/pommel attacks (base)
         [SerializeField] private float lightAttackRange = 1.5f;
         [SerializeField] private float heavyAttackRange = 2.0f;
+        [SerializeField] private float handleAttackRange = 1.0f; // Shorter range for handle attack
         [SerializeField] private LayerMask enemyLayers;
+        
+        // Current attack point (switches based on attack type)
+        private Transform currentAttackPoint;
 
         [Header("Damage Settings")]
         [SerializeField] private float[] lightComboDamage = { 10f, 12f, 15f, 20f };
@@ -202,6 +207,7 @@ namespace Maskbound.Core
             if (isHeavy)
             {
                 animator.SetTrigger(animIDHeavyAttack);
+                currentAttackPoint = attackPointBlade; // Heavy attacks use blade
                 totalDuration = heavyAttackDuration;
                 currentAttackEndTime = Time.time + totalDuration;
                 
@@ -245,15 +251,19 @@ namespace Maskbound.Core
             {
                 case 0:
                     animator.SetTrigger(animIDLightAttack1);
+                    currentAttackPoint = attackPointHandle; // Handle attack uses pommel
                     break;
                 case 1:
                     animator.SetTrigger(animIDLightAttack2);
+                    currentAttackPoint = attackPointBlade; // Slash uses blade
                     break;
                 case 2:
                     animator.SetTrigger(animIDLightAttack3);
+                    currentAttackPoint = attackPointBlade; // Spin uses blade
                     break;
                 case 3:
                     animator.SetTrigger(animIDLightAttack4);
+                    currentAttackPoint = attackPointBlade; // Triple slash uses blade
                     break;
             }
         }
@@ -272,10 +282,31 @@ namespace Maskbound.Core
 
         private void DetectHits(bool isHeavy)
         {
-            if (attackPoint == null) return;
+            // Use currentAttackPoint if set, otherwise fall back to blade point
+            Transform activeAttackPoint = currentAttackPoint != null ? currentAttackPoint : attackPointBlade;
+            
+            if (activeAttackPoint == null) 
+            {
+                Debug.LogWarning("No attack point assigned!");
+                return;
+            }
 
-            float range = isHeavy ? heavyAttackRange : lightAttackRange;
-            Collider[] hitEnemies = Physics.OverlapSphere(attackPoint.position, range, enemyLayers);
+            // Determine range based on attack type
+            float range;
+            if (isHeavy)
+            {
+                range = heavyAttackRange;
+                currentAttackPoint = attackPointBlade; // Heavy attacks use blade
+            }
+            else
+            {
+                // For handle attack (combo index 0), use shorter range
+                range = (currentComboIndex == 1 && currentAttackPoint == attackPointHandle) 
+                    ? handleAttackRange 
+                    : lightAttackRange;
+            }
+            
+            Collider[] hitEnemies = Physics.OverlapSphere(activeAttackPoint.position, range, enemyLayers);
 
             foreach (Collider enemy in hitEnemies)
             {
@@ -337,13 +368,21 @@ namespace Maskbound.Core
 
         private void OnDrawGizmosSelected()
         {
-            if (attackPoint != null)
+            // Draw blade attack point
+            if (attackPointBlade != null)
             {
                 Gizmos.color = Color.red;
-                Gizmos.DrawWireSphere(attackPoint.position, lightAttackRange);
+                Gizmos.DrawWireSphere(attackPointBlade.position, lightAttackRange);
                 
                 Gizmos.color = Color.yellow;
-                Gizmos.DrawWireSphere(attackPoint.position, heavyAttackRange);
+                Gizmos.DrawWireSphere(attackPointBlade.position, heavyAttackRange);
+            }
+            
+            // Draw handle attack point
+            if (attackPointHandle != null)
+            {
+                Gizmos.color = Color.cyan;
+                Gizmos.DrawWireSphere(attackPointHandle.position, handleAttackRange);
             }
         }
 
