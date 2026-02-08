@@ -16,6 +16,7 @@ public class Hud : MonoBehaviour
         {
             // Here you would update your health bar UI based on e.currentHealth and e.maxHealth
                 float healthPercent = e.hp;
+                healthBar.fillAmount = healthPercent;
             Debug.Log($"Health Updated:"+e.hp);
         }
     }
