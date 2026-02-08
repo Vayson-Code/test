@@ -26,6 +26,8 @@ namespace Maskbound.Scripts.Core
             }
             Instance = this;
             DontDestroyOnLoad(gameObject);
+
+            currentMapIndex = 3;
         }
 
         // Call this when the player obtains the mask
